@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ⚠️ REPLACE THE PASSWORD BELOW WITH YOUR ACTUAL MONGODB PASSWORD
-const mongoURI = "mongodb+srv://mojeauta123_db_user:YOUR_PASSWORD_HERE@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority";
+const mongoURI = "mongodb+srv://mojeauta123_db_user:Apple12345@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority";
 
 mongoose.connect(mongoURI).then(() => console.log("☕ Connected")).catch(err => console.log(err));
 
