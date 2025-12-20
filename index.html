@@ -3,65 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokec Live Chat</title>
+    <title>BrewBound Café Chat</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e5ddd5; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        #chat-container { width: 100%; max-width: 500px; height: 95vh; background: white; display: flex; flex-direction: column; border-radius: 15px; box-shadow: 0 12px 28px rgba(0,0,0,0.2); overflow: hidden; }
-        header { background: #075e54; color: white; padding: 15px; font-weight: bold; text-align: center; font-size: 1.2rem; }
-        #messages { flex: 1; overflow-y: auto; padding: 20px; list-style: none; margin: 0; background-color: #efeae2; display: flex; flex-direction: column; }
-        #messages li { background: white; padding: 8px 15px; border-radius: 12px; margin-bottom: 8px; width: fit-content; max-width: 80%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 15px; }
-        #messages li strong { display: block; color: #128c7e; font-size: 12px; margin-bottom: 2px; }
-        #messages li.my-message { background: #dcf8c6; align-self: flex-end; }
+        :root { --cafe: #4e342e; --cream: #fff8e1; --green: #075e54; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--cream); margin: 0; display: flex; height: 100vh; }
+        #auth-overlay { position: fixed; inset: 0; background: var(--cafe); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .auth-box { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        input { width: 100%; margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { background: var(--green); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        .switch-link { font-size: 13px; color: var(--cafe); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
+        #chat-container { width: 100%; max-width: 500px; margin: auto; height: 100vh; background: white; display: none; flex-direction: column; }
+        #messages { flex: 1; overflow-y: auto; padding: 20px; list-style: none; margin: 0; background: #efeae2; display: flex; flex-direction: column; }
+        #messages li { background: white; padding: 10px; border-radius: 10px; margin-bottom: 8px; max-width: 80%; }
+        #messages li.my-message { align-self: flex-end; background: #dcf8c6; }
         form { display: flex; padding: 15px; background: #f0f0f0; gap: 10px; }
-        input { flex: 1; border: none; padding: 12px 20px; border-radius: 25px; outline: none; font-size: 16px; }
-        button { background: #075e54; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 20px; }
+        #input { flex: 1; border: none; padding: 12px; border-radius: 25px; outline: none; }
     </style>
 </head>
 <body>
+    <div id="auth-overlay">
+        <div id="register-ui" class="auth-box">
+            <h2 style="color:var(--cafe)">Create Account</h2>
+            <input type="email" id="re" placeholder="Email Address">
+            <input type="text" id="ru" placeholder="Your Display Name">
+            <input type="password" id="rp" placeholder="Create Password">
+            <button class="btn" onclick="sendAuth('register')">Register</button>
+            <span class="switch-link" onclick="showLogin(true)">Already have an account? Login</span>
+            <p id="r-err" style="color:red; font-size:12px;"></p>
+        </div>
 
-<div id="chat-container">
-    <header>Pokec Live</header>
-    <ul id="messages"></ul>
-    <form id="form">
-        <input id="input" autocomplete="off" placeholder="Type a message..." />
-        <button type="submit">➤</button>
-    </form>
-</div>
+        <div id="login-ui" class="auth-box" style="display:none;">
+            <h2 style="color:var(--cafe)">Welcome Back</h2>
+            <input type="email" id="le" placeholder="Email Address">
+            <input type="password" id="lp" placeholder="Password">
+            <button class="btn" onclick="sendAuth('login')">Login</button>
+            <span class="switch-link" onclick="showLogin(false)">New here? Create Account</span>
+            <p id="l-err" style="color:red; font-size:12px;"></p>
+        </div>
+    </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io(); 
-    // Ask for name, or give a random Guest name
-    const username = prompt("Nickname:") || "User" + Math.floor(Math.random() * 1000);
+    <div id="chat-container">
+        <header style="background:var(--green); color:white; padding:15px; text-align:center; font-weight:bold;">BrewBound Social</header>
+        <ul id="messages"></ul>
+        <form id="form">
+            <input id="input" autocomplete="off" placeholder="Message the café..." />
+            <button type="submit" style="background:none; border:none; cursor:pointer; font-size:20px;">➤</button>
+        </form>
+    </div>
 
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const messageList = document.getElementById('messages');
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let myUser = "";
 
-    function addMessage(data) {
-        const item = document.createElement('li');
-        if (data.user === username) item.classList.add('my-message');
-        item.innerHTML = `<strong>${data.user}</strong> ${data.text}`;
-        messageList.appendChild(item);
-        messageList.scrollTop = messageList.scrollHeight; // Auto-scroll to bottom
-    }
-
-    // Load history when joining
-    socket.on('load history', (history) => {
-        messageList.innerHTML = '';
-        history.forEach(data => addMessage(data));
-    });
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (input.value.trim()) {
-            socket.emit('chat message', { user: username, text: input.value });
-            input.value = '';
+        function showLogin(shouldShow) {
+            document.getElementById('login-ui').style.display = shouldShow ? 'block' : 'none';
+            document.getElementById('register-ui').style.display = shouldShow ? 'none' : 'block';
         }
-    });
 
-    socket.on('chat message', (data) => addMessage(data));
-</script>
+        function sendAuth(type) {
+            if (type === 'register') {
+                const email = document.getElementById('re').value;
+                const username = document.getElementById('ru').value;
+                const password = document.getElementById('rp').value;
+                if(email && username && password) socket.emit('register', { email, username, password });
+            } else {
+                const email = document.getElementById('le').value;
+                const password = document.getElementById('lp').value;
+                if(email && password) socket.emit('login', { email, password });
+            }
+        }
+
+        socket.on('auth success', (data) => {
+            myUser = data.username;
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'flex';
+        });
+
+        socket.on('auth error', m => {
+            document.getElementById('r-err').innerText = m;
+            document.getElementById('l-err').innerText = m;
+        });
+
+        socket.on('chat message', (data) => {
+            const li = document.createElement('li');
+            if(data.user === myUser) li.classList.add('my-message');
+            li.innerHTML = `<strong>${data.user}</strong>: ${data.text}`;
+            document.getElementById('messages').appendChild(li);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        });
+
+        socket.on('load history', h => {
+            h.forEach(msg => {
+                const li = document.createElement('li');
+                if(msg.user === myUser) li.classList.add('my-message');
+                li.innerHTML = `<strong>${msg.user}</strong>: ${msg.text}`;
+                document.getElementById('messages').appendChild(li);
+            });
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        });
+
+        document.getElementById('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inp = document.getElementById('input');
+            if (inp.value) { socket.emit('chat message', { text: inp.value }); inp.value = ''; }
+        });
+    </script>
 </body>
 </html>

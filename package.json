@@ -1,13 +1,14 @@
 {
-  "name": "pokec-chat",
-  "version": "1.0.0",
-  "description": "Real-time chat for Render",
+  "name": "brewbound-chat",
+  "version": "1.3.0",
+  "description": "Professional Email-Login Chat",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.6.1"
+    "socket.io": "^4.6.1",
+    "mongoose": "^8.0.0"
   }
 }
