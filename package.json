@@ -1,7 +1,6 @@
 {
-  "name": "brewbound-chat",
-  "version": "1.3.0",
-  "description": "Professional Email-Login Chat",
+  "name": "brewbound-cafe-chat",
+  "version": "2.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
