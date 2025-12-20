@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 // --- THE FINAL FIX: Using Cluster ID 2k2jps5 ---
 // Replace <db_password> with the password for mojeauta123_db_user
-const mongoURI = "mongodb+srv://mojeauta123_db_user:ChatApp2025@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority"; 
+const mongoURI = "mongodb+srv://mojeauta123_db_user:Apple12345@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority";
 
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
