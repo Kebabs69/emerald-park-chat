@@ -3,133 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokec Secure Chat</title>
+    <title>Emerald Park Chat</title>
     <style>
-        :root { --pokec-green: #075e54; --pokec-light: #dcf8c6; --pokec-bg: #e5ddd5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--pokec-bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Auth Screen */
-        #auth-overlay { position: fixed; inset: 0; background: var(--pokec-green); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .auth-box { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        input { width: 100%; margin-bottom: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: var(--pokec-green); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
-        
-        /* Chat Interface */
-        #chat-container { width: 100%; max-width: 500px; margin: auto; height: 100vh; background: white; display: none; flex-direction: column; }
-        header { background: var(--pokec-green); color: white; padding: 15px; text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        #messages { flex: 1; overflow-y: auto; padding: 20px; list-style: none; margin: 0; background: #efeae2; display: flex; flex-direction: column; }
-        #messages li { background: white; padding: 10px; border-radius: 10px; margin-bottom: 8px; max-width: 80%; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); word-wrap: break-word; }
-        #messages li.my-message { align-self: flex-end; background: var(--pokec-light); }
-        
-        /* Admin Elements */
-        #admin-panel { position: fixed; top: 10px; left: 10px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none; z-index: 2000; width: 250px; }
-        .del-btn { color: red; cursor: pointer; font-size: 11px; margin-left: 10px; font-weight: bold; }
-        
-        form { display: flex; padding: 15px; background: #f0f0f0; gap: 10px; border-top: 1px solid #ddd; }
-        #input { flex: 1; border: none; padding: 12px; border-radius: 25px; outline: none; }
+        body { font-family: sans-serif; background-color: #e5e5e5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #004d40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .message { background: white; padding: 10px 15px; border-radius: 10px; max-width: 70%; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .admin-btn { background: #004d40; border: 1px solid white; color: white; padding: 5px 10px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .input-area { background: white; padding: 20px; display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        #admin-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 1000; min-width: 300px; }
+        .delete-ico { cursor: pointer; margin-left: 10px; color: red; font-size: 14px; }
+        .ban-btn { background: #ff4444; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="auth-overlay">
-        <div id="register-ui" class="auth-box">
-            <h2 style="color:var(--pokec-green)">Create Account</h2>
-            <input type="email" id="re" placeholder="Email Address">
-            <input type="text" id="ru" placeholder="Username">
-            <input type="password" id="rp" placeholder="Password">
-            <button class="btn" onclick="auth('register')">Register</button>
-            <p onclick="toggle(true)" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666;">Already a member? Login</p>
-            <p id="r-err" style="color:red; font-size:12px;"></p>
-        </div>
-        <div id="login-ui" class="auth-box" style="display:none;">
-            <h2 style="color:var(--pokec-green)">Welcome Back</h2>
-            <input type="email" id="le" placeholder="Email Address">
-            <input type="password" id="lp" placeholder="Password">
-            <button class="btn" onclick="auth('login')">Login</button>
-            <p onclick="toggle(false)" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666;">New? Create Account</p>
-            <p id="l-err" style="color:red; font-size:12px;"></p>
-        </div>
+    <div class="header">
+        <span id="user-display">Pokec Live</span>
+        <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
     </div>
 
-    <div id="admin-panel">
-        <h4 style="margin:0 0 10px 0;">Admin Tools</h4>
-        <button onclick="socket.emit('admin:get-users')" style="font-size:10px; width:100%;">View User List</button>
-        <ul id="user-list" style="font-size:11px; padding:10px 0; margin:0; list-style:none;"></ul>
-        <button onclick="document.getElementById('admin-panel').style.display='none'" style="width:100%; margin-top:10px;">Close</button>
+    <div id="chat-box"></div>
+
+    <div class="input-area">
+        <input type="text" id="msg-input" placeholder="Type a message...">
+        <button onclick="sendMsg()" style="background: none; border: none; cursor: pointer; font-size: 24px;">➤</button>
     </div>
 
-    <div id="chat-container">
-        <header>
-            <span>Pokec Live</span>
-            <span id="admin-link" onclick="document.getElementById('admin-panel').style.display='block'" style="display:none; cursor:pointer; font-size:11px; border:1px solid white; padding:3px 8px; border-radius:4px;">ADMIN</span>
-        </header>
-        <ul id="messages"></ul>
-        <form id="form">
-            <input id="input" autocomplete="off" placeholder="Type a message..." />
-            <button type="submit" style="background:none; border:none; cursor:pointer; font-size:22px; color:var(--pokec-green)">➤</button>
-        </form>
+    <div id="admin-modal">
+        <h3>Admin Tools</h3>
+        <button onclick="clearAllChat()" style="width:100%; background:orange; margin-bottom:10px; border:none; padding:10px; cursor:pointer;">⚠️ CLEAR ALL MESSAGES</button>
+        <ul id="user-list" style="list-style:none; padding:0;"></ul>
+        <button onclick="document.getElementById('admin-modal').style.display='none'" style="width:100%; margin-top:10px;">Close</button>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-        let myUser = "";
-        let iAmAdmin = false;
+        let userEmail = localStorage.getItem('userEmail');
+        let username = localStorage.getItem('username');
+        let isAdmin = false;
 
-        function toggle(s) {
-            document.getElementById('login-ui').style.display = s ? 'block' : 'none';
-            document.getElementById('register-ui').style.display = s ? 'none' : 'block';
+        async function checkStatus() {
+            if (!userEmail) return window.location.href = '/login.html';
+            const res = await fetch(`/api/user-status?email=${userEmail}`);
+            const data = await res.json();
+            isAdmin = data.isAdmin;
+            if (isAdmin) document.getElementById('admin-panel-btn').style.display = 'block';
+            loadMessages();
         }
 
-        function auth(type) {
-            const data = type === 'register' ? 
-                { email: document.getElementById('re').value, username: document.getElementById('ru').value, password: document.getElementById('rp').value } :
-                { email: document.getElementById('le').value, password: document.getElementById('lp').value };
-            if(data.email) socket.emit(type, data);
+        async function loadMessages() {
+            const res = await fetch('/api/messages');
+            const messages = await res.json();
+            const box = document.getElementById('chat-box');
+            box.innerHTML = '';
+            messages.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'message';
+                const trash = isAdmin ? `<span class="delete-ico" onclick="deleteMsg('${m._id}')">🗑️</span>` : '';
+                div.innerHTML = `<strong>${m.username}</strong>: ${m.text} ${trash}`;
+                box.appendChild(div);
+            });
+            box.scrollTop = box.scrollHeight;
         }
 
-        socket.on('auth success', (data) => {
-            myUser = data.username;
-            iAmAdmin = data.isAdmin;
-            document.getElementById('auth-overlay').style.display = 'none';
-            document.getElementById('chat-container').style.display = 'flex';
-            if(iAmAdmin) document.getElementById('admin-link').style.display = 'block';
-        });
+        async function sendMsg() {
+            const text = document.getElementById('msg-input').value;
+            if (!text) return;
+            await fetch('/api/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: userEmail, username, text })
+            });
+            document.getElementById('msg-input').value = '';
+            loadMessages();
+        }
 
-        socket.on('auth error', m => { 
-            document.getElementById('r-err').innerText = m; 
-            document.getElementById('l-err').innerText = m; 
-        });
+        async function openAdmin() {
+            const res = await fetch('/api/users');
+            const users = await res.json();
+            const list = document.getElementById('user-list');
+            list.innerHTML = '';
+            users.forEach(u => {
+                const li = document.createElement('li');
+                li.style.padding = "5px 0";
+                const banBtn = u.email !== userEmail ? `<button class="ban-btn" onclick="banUser('${u.email}')">BAN</button>` : '<i>(You)</i>';
+                li.innerHTML = `${u.username} ${banBtn}`;
+                list.appendChild(li);
+            });
+            document.getElementById('admin-modal').style.display = 'block';
+        }
 
-        function addMsg(data) {
-            const li = document.createElement('li');
-            if(data.user === myUser) li.classList.add('my-message');
-            li.innerHTML = `<strong>${data.user}</strong>: ${data.text}`;
-            if(iAmAdmin && data.id) {
-                const del = document.createElement('span');
-                del.innerText = " (X)";
-                del.className = "del-btn";
-                del.onclick = () => socket.emit('admin:delete-msg', data.id);
-                li.appendChild(del);
+        async function deleteMsg(id) {
+            if (confirm("Delete this message?")) {
+                await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+                loadMessages();
             }
-            document.getElementById('messages').appendChild(li);
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
         }
 
-        socket.on('chat message', addMsg);
-        socket.on('load history', h => { 
-            document.getElementById('messages').innerHTML=''; 
-            h.forEach(addMsg); 
-        });
+        async function banUser(email) {
+            if (confirm(`Ban ${email}?`)) {
+                await fetch('/api/ban', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email })
+                });
+                openAdmin();
+            }
+        }
 
-        socket.on('admin:user-list', list => {
-            document.getElementById('user-list').innerHTML = list.map(u => `<li>${u.username} (${u.email})</li>`).join('<hr>');
-        });
+        async function clearAllChat() {
+            if (confirm("WIPE EVERYTHING?")) {
+                await fetch('/api/clear-chat', { method: 'POST' });
+                loadMessages();
+                document.getElementById('admin-modal').style.display = 'none';
+            }
+        }
 
-        document.getElementById('form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const inp = document.getElementById('input');
-            if(inp.value.trim()) { socket.emit('chat message', { text: inp.value }); inp.value = ''; }
-        });
+        checkStatus();
+        setInterval(loadMessages, 3000);
     </script>
 </body>
 </html>
