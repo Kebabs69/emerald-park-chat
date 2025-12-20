@@ -7,6 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // ⚠️ REPLACE THE PASSWORD BELOW WITH YOUR ACTUAL MONGODB PASSWORD
 const mongoURI = "mongodb+srv://mojeauta123_db_user:Apple12345@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority";
