@@ -5,7 +5,7 @@ const io = require('socket.io')(http);
 const mongoose = require('mongoose');
 
 // --- REPLACE <password> WITH YOUR REAL PASSWORD ---
-const mongoURI = "mongodb+srv://Ramzzy:<password>@cluster0.xxxx.mongodb.net/PokecDB?retryWrites=true&w=majority"; 
+mongodb+srv://Ramzzy:<db_password>@cluster0.foflfid.mongodb.net/?appName=Cluster0
 
 mongoose.connect(mongoURI).then(() => console.log("DB Connected"));
 
