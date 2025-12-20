@@ -4,8 +4,9 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const mongoose = require('mongoose');
 
-// --- THE FIX: Using your real cluster ID 'foflfid' ---
-const mongoURI = "mongodb+srv://Ramzzy:YOUR_REAL_PASSWORD@cluster0.foflfid.mongodb.net/PokecDB?retryWrites=true&w=majority"; 
+// --- THE FINAL FIX: Using Cluster ID 2k2jps5 ---
+// Replace <db_password> with the password for mojeauta123_db_user
+const mongoURI = "mongodb+srv://mojeauta123_db_user:<db_password>@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority"; 
 
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
