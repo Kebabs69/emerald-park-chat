@@ -16,16 +16,14 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// Stores user profile including the avatar
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
-    email: { type: String, unique: true, required: true }, 
+    email: { type: String, unique: true, required: true }, //
     password: String, 
     isAdmin: Boolean,
     avatar: { type: String, default: '👤' } 
 }));
 
-// Saves message with the corresponding room name
 const Message = mongoose.model('Message', new mongoose.Schema({
     username: String, 
     email: String, 
@@ -75,14 +73,16 @@ app.get('/api/user-status', async (req, res) => {
     res.json({ isAdmin: user ? user.isAdmin : false });
 });
 
-// Register route with crash protection for duplicate emails
 app.post('/api/register', async (req, res) => {
     try {
         const { email, username, password, avatar } = req.body;
         const existingUser = await User.findOne({ email });
+        
+        // Return error if email exists
         if (existingUser) {
             return res.status(400).json({ error: "Email already registered!" });
         }
+
         const count = await User.countDocuments();
         const user = new User({
             username, email, password, avatar: avatar || '👤', isAdmin: count === 0
