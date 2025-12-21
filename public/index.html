@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dating site</title>
+    <title>Chat Rooms</title>
     <style>
         body { font-family: sans-serif; background-color: #e5e5e5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         .header { background: #004d40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -64,6 +64,7 @@
             <button class="room-btn" onclick="switchRoom('Cars')">Cars</button>
             <button class="room-btn" onclick="switchRoom('Music')">Music</button>
             <button class="room-btn" onclick="switchRoom('Games')">Games</button>
+            <button class="room-btn" onclick="switchRoom('Looking for work')">Looking for work</button>
         </div>
 
         <div id="chat-box"></div>
@@ -123,7 +124,6 @@
             const password = document.getElementById('reg-pass').value;
             const avatar = document.getElementById('reg-avatar').value;
 
-            // Stop users from using fake email text
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email)) {
                 alert("Please enter a valid email address!");
