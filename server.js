@@ -10,27 +10,32 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// SECURITY FIX: Replaced plain-text password with Environment Variable
+// SECURITY: Uses Render's Environment Variable
 const mongoURI = process.env.MONGO_URI; 
 
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
+// UPDATED SCHEMA: Added isVIP to track paying users
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
     password: String, 
     isAdmin: Boolean,
+    isVIP: { type: Boolean, default: false }, // New field for monetization
     avatar: { type: String, default: '👤' } 
 }));
 
+// UPDATED SCHEMA: Messages now store if sender is Admin or VIP
 const Message = mongoose.model('Message', new mongoose.Schema({
     username: String, 
     email: String, 
     text: String, 
     room: String, 
     avatar: String, 
+    isAdmin: Boolean,
+    isVIP: Boolean,
     timestamp: { type: Date, default: Date.now }
 }));
 
@@ -63,15 +68,21 @@ app.post('/api/messages', async (req, res) => {
     const msg = new Message({
         ...req.body,
         text: cleanText,
-        avatar: user.avatar 
+        avatar: user.avatar,
+        isAdmin: user.isAdmin, // Attaches Admin status to message
+        isVIP: user.isVIP      // Attaches VIP status to message
     });
     await msg.save();
     res.json(msg);
 });
 
+// UPDATED: Now returns both Admin and VIP status to the frontend
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
-    res.json({ isAdmin: user ? user.isAdmin : false });
+    res.json({ 
+        isAdmin: user ? user.isAdmin : false,
+        isVIP: user ? user.isVIP : false 
+    });
 });
 
 app.post('/api/register', async (req, res) => {
@@ -83,7 +94,7 @@ app.post('/api/register', async (req, res) => {
         }
         const count = await User.countDocuments();
         const user = new User({
-            username, email, password, avatar: avatar || '👤', isAdmin: count === 0
+            username, email, password, avatar: avatar || '👤', isAdmin: count === 0, isVIP: false
         });
         await user.save();
         res.json({ success: true });
