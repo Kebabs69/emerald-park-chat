@@ -8,7 +8,7 @@
         body { font-family: sans-serif; background-color: #e5e5e5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         .header { background: #004d40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* NEW: Rooms Bar Styling */
+        /* Rooms Bar Styling */
         .rooms-bar { background: #00695c; color: white; padding: 10px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .room-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; }
         .room-btn.active { background: white; color: #004d40; font-weight: bold; }
@@ -22,7 +22,6 @@
         .delete-ico { cursor: pointer; margin-left: 10px; color: red; font-size: 14px; }
         .ban-btn { background: #ff4444; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
         
-        /* Auth Screen Styles */
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #004d40; color: white; }
         .auth-container { background: white; padding: 20px; border-radius: 10px; color: black; width: 80%; max-width: 350px; text-align: center; margin: 10px; }
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
@@ -32,7 +31,6 @@
 
     <div id="auth-screen">
         <h2 style="margin-bottom: 20px;">Emerald Park Login</h2>
-        
         <div class="auth-container">
             <h3>Login</h3>
             <input type="email" id="login-email" placeholder="Email">
@@ -51,7 +49,7 @@
 
     <div id="chat-screen">
         <div class="header">
-            <span id="user-display">Chat Live | <span id="clock">00:00:00</span></span>
+            <span id="user-display">Pokec Live | <span id="clock">00:00:00</span></span>
             <div style="display:flex; gap:10px;">
                 <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
                 <button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">X</button>
@@ -83,30 +81,27 @@
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
         let isAdmin = false;
-        let currentRoom = 'General'; // NEW: Track the current room
+        let currentRoom = 'General';
 
-        // REAL-TIME CLOCK FUNCTION
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString();
             const clockElement = document.getElementById('clock');
-            if (clockElement) clockElement.innerText = timeString;
+            if (clockElement) clockElement.innerText = now.toLocaleTimeString();
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // NEW: Switch Room Function
         function switchRoom(room) {
             currentRoom = room;
             document.querySelectorAll('.room-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText === room);
             });
-            loadMessages(); // Reload and filter for the new room
+            // Clear the box immediately so old room messages don't linger while loading
+            document.getElementById('chat-box').innerHTML = '';
+            loadMessages(); 
         }
 
-        if (userEmail) {
-            enterChat();
-        }
+        if (userEmail) enterChat();
 
         function enterChat() {
             document.getElementById('auth-screen').style.display = 'none';
@@ -117,13 +112,11 @@
         async function handleLogin() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-pass').value;
-            
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ email, password })
             });
-
             if(res.ok) {
                 const user = await res.json();
                 localStorage.setItem('userEmail', user.email);
@@ -131,33 +124,23 @@
                 userEmail = user.email;
                 username = user.username;
                 enterChat();
-            } else {
-                alert("Login failed! Check email/password.");
-            }
+            } else { alert("Login failed!"); }
         }
 
         async function handleRegister() {
             const usernameInput = document.getElementById('reg-user').value;
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
-            
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ username: usernameInput, email, password })
             });
-
-            if(res.ok) {
-                alert("Account created! Now use the Login box above.");
-            } else {
-                alert("Error: User might already exist.");
-            }
+            if(res.ok) alert("Account created!");
+            else alert("Error.");
         }
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
+        function logout() { localStorage.clear(); location.reload(); }
 
         async function checkStatus() {
             const res = await fetch(`/api/user-status?email=${userEmail}`);
@@ -173,9 +156,10 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
             
-            // NEW: Filter messages so only those for the current room appear
+            // KEY FIX: Filter the messages by the room they belong to
             const filteredMessages = messages.filter(m => {
                 if (currentRoom === 'General') {
+                    // Show message if it has no room tag OR is tagged 'General'
                     return !m.room || m.room === 'General';
                 }
                 return m.room === currentRoom;
@@ -201,14 +185,10 @@
                     email: userEmail, 
                     username, 
                     text, 
-                    room: currentRoom // NEW: Tag the message with the room name
+                    room: currentRoom // KEY FIX: Tag the message with the current room
                 })
             });
-            if (res.status === 403) {
-                alert("YOU ARE BANNED!");
-                logout();
-                return;
-            }
+            if (res.status === 403) { alert("BANNED!"); logout(); return; }
             document.getElementById('msg-input').value = '';
             loadMessages();
         }
@@ -232,17 +212,13 @@
 
         async function banUser(email) {
             if (confirm(`Ban ${email}?`)) {
-                await fetch('/api/ban', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email })
-                });
+                await fetch('/api/ban', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) });
                 openAdmin();
             }
         }
 
         async function deleteMsg(id) {
-            if (confirm("Delete message?")) {
+            if (confirm("Delete?")) {
                 await fetch(`/api/messages/${id}`, { method: 'DELETE' });
                 loadMessages();
             }
