@@ -7,54 +7,53 @@
     <style>
         body { font-family: sans-serif; background-color: #e5e5e5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         .header { background: #004d40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* AUTH BOX STYLES */
-        #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; }
-        .auth-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; }
-        .auth-box h3 { margin-top: 0; color: #004d40; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .btn-login { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-register { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        
-        /* CHAT STYLES */
-        #chat-screen { display: none; flex-direction: column; height: 100vh; }
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         .message { background: white; padding: 10px 15px; border-radius: 10px; max-width: 70%; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .admin-btn { background: #004d40; border: 1px solid white; color: white; padding: 5px 10px; cursor: pointer; border-radius: 5px; font-weight: bold; }
         .input-area { background: white; padding: 20px; display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; margin: 5px 0; }
         #admin-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 1000; min-width: 300px; }
         .delete-ico { cursor: pointer; margin-left: 10px; color: red; font-size: 14px; }
         .ban-btn { background: #ff4444; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
+        
+        /* Auth Screen Styles */
+        #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #004d40; color: white; }
+        .auth-container { background: white; padding: 20px; border-radius: 10px; color: black; width: 80%; max-width: 350px; text-align: center; margin: 10px; }
+        #chat-screen { display: none; flex-direction: column; height: 100vh; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
-        <div class="auth-box">
+        <h2 style="margin-bottom: 20px;">Emerald Park Login</h2>
+        
+        <div class="auth-container">
             <h3>Login</h3>
             <input type="email" id="login-email" placeholder="Email">
-            <input type="password" id="login-password" placeholder="Password">
-            <button class="btn-login" onclick="handleLogin()">LOGIN</button>
+            <input type="password" id="login-pass" placeholder="Password">
+            <button onclick="handleLogin()" style="width:100%; padding:10px; background: #28a745; color:white; border:none; border-radius:5px; cursor:pointer;">LOGIN</button>
         </div>
 
-        <div style="font-weight: bold; color: #666;">- OR -</div>
-
-        <div class="auth-box">
+        <div class="auth-container">
             <h3>Register</h3>
             <input type="text" id="reg-user" placeholder="Username">
             <input type="email" id="reg-email" placeholder="Email">
             <input type="password" id="reg-pass" placeholder="Password">
-            <button class="btn-register" onclick="handleRegister()">CREATE ACCOUNT</button>
+            <button onclick="handleRegister()" style="width:100%; padding:10px; background: #007bff; color:white; border:none; border-radius:5px; cursor:pointer;">CREATE ACCOUNT</button>
         </div>
     </div>
 
     <div id="chat-screen">
         <div class="header">
             <span id="user-display">Pokec Live</span>
-            <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
-            <button onclick="logout()" style="background:none; border:none; color:white; cursor:pointer;">Logout</button>
+            <div style="display:flex; gap:10px;">
+                <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
+                <button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">X</button>
+            </div>
         </div>
+
         <div id="chat-box"></div>
+
         <div class="input-area">
             <input type="text" id="msg-input" placeholder="Type a message...">
             <button onclick="sendMsg()" style="background: none; border: none; cursor: pointer; font-size: 24px;">➤</button>
@@ -73,54 +72,60 @@
         let username = localStorage.getItem('username');
         let isAdmin = false;
 
-        // Check if already logged in
-        if(userEmail) showChat();
+        // Auto-check on load
+        if (userEmail) {
+            enterChat();
+        }
 
-        function showChat() {
+        function enterChat() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'flex';
             checkStatus();
         }
 
         async function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-pass').value;
+            
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ email, password })
             });
+
             if(res.ok) {
                 const user = await res.json();
                 localStorage.setItem('userEmail', user.email);
                 localStorage.setItem('username', user.username);
                 userEmail = user.email;
                 username = user.username;
-                showChat();
+                enterChat();
             } else {
-                alert("Login Failed");
+                alert("Login failed! Check email/password.");
             }
         }
 
         async function handleRegister() {
             const usernameInput = document.getElementById('reg-user').value;
-            const email = document.getElementById('reg-email').value;
+            const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
+            
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ username: usernameInput, email, password })
             });
+
             if(res.ok) {
-                alert("Registered! Now please Login above.");
+                alert("Account created! Now use the Login box above.");
             } else {
-                alert("Error or Email exists");
+                alert("Error: User might already exist.");
             }
         }
 
         function logout() {
             localStorage.clear();
-            window.location.reload();
+            location.reload();
         }
 
         async function checkStatus() {
@@ -149,11 +154,16 @@
         async function sendMsg() {
             const text = document.getElementById('msg-input').value;
             if (!text) return;
-            await fetch('/api/messages', {
+            const res = await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ email: userEmail, username, text })
             });
+            if (res.status === 403) {
+                alert("YOU ARE BANNED!");
+                logout();
+                return;
+            }
             document.getElementById('msg-input').value = '';
             loadMessages();
         }
@@ -165,19 +175,14 @@
             list.innerHTML = '';
             users.forEach(u => {
                 const li = document.createElement('li');
-                li.style.padding = "5px 0";
-                const banBtn = u.email !== userEmail ? `<button class="ban-btn" onclick="banUser('${u.email}')">BAN</button>` : '<i>(You)</i>';
-                li.innerHTML = `${u.username} ${banBtn}`;
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.padding = '5px 0';
+                const banBtn = u.email !== userEmail ? `<button class="ban-btn" onclick="banUser('${u.email}')">BAN</button>` : '<i>(Admin)</i>';
+                li.innerHTML = `<span>${u.username}</span> ${banBtn}`;
                 list.appendChild(li);
             });
             document.getElementById('admin-modal').style.display = 'block';
-        }
-
-        async function deleteMsg(id) {
-            if (confirm("Delete this message?")) {
-                await fetch(`/api/messages/${id}`, { method: 'DELETE' });
-                loadMessages();
-            }
         }
 
         async function banUser(email) {
@@ -185,13 +190,21 @@
                 await fetch('/api/ban', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email })\n                });
+                    body: JSON.stringify({ email })
+                });
                 openAdmin();
             }
         }
 
+        async function deleteMsg(id) {
+            if (confirm("Delete message?")) {
+                await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+                loadMessages();
+            }
+        }
+
         async function clearAllChat() {
-            if (confirm("WIPE EVERYTHING?")) {
+            if (confirm("Clear all?")) {
                 await fetch('/api/clear-chat', { method: 'POST' });
                 loadMessages();
                 document.getElementById('admin-modal').style.display = 'none';
