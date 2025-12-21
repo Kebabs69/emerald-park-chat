@@ -35,6 +35,7 @@
             <input type="text" id="reg-user" placeholder="Username"><br>
             <input type="email" id="reg-email" placeholder="Email"><br>
             <input type="password" id="reg-pass" placeholder="Password"><br>
+            
             <label style="font-size: 12px; display:block; margin-top:10px;">Pick your Profile Picture:</label>
             <select id="reg-avatar" style="width:100%;">
                 <option value="👤">Standard</option>
@@ -45,6 +46,7 @@
                 <option value="👑">VIP Crown</option>
                 <option value="🔥">Fire Avatar</option>
             </select><br>
+            
             <button onclick="handleRegister()" style="width:100%; padding:10px; background: #007bff; color:white; border:none; border-radius:5px; margin-top:10px; cursor:pointer;">CREATE ACCOUNT</button>
         </div>
     </div>
@@ -124,6 +126,7 @@
             const password = document.getElementById('reg-pass').value;
             const avatar = document.getElementById('reg-avatar').value;
 
+            // Email validation added for security
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email)) {
                 alert("Please enter a valid email address!");
@@ -160,6 +163,7 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
             
+            // Filters messages based on the current room
             const filteredMessages = messages.filter(m => {
                 if (currentRoom === 'Dating site') return !m.room || m.room === 'Dating site';
                 return m.room === currentRoom;

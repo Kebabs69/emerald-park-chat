@@ -10,7 +10,8 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-const mongoURI = "mongodb+srv://mojeauta123_db_user:Apple12345@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority";
+// SECURITY FIX: Replaced plain-text password with Environment Variable
+const mongoURI = process.env.MONGO_URI; 
 
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
