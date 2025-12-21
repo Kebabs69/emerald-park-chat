@@ -21,9 +21,16 @@ const User = mongoose.model('User', new mongoose.Schema({
     username: String, email: String, password: String, isAdmin: Boolean
 }));
 
+// --- UPDATED MESSAGE SCHEMA ---
+// Added 'room' so the database actually saves which room the message belongs to
 const Message = mongoose.model('Message', new mongoose.Schema({
-    username: String, email: String, text: String, timestamp: { type: Date, default: Date.now }
+    username: String, 
+    email: String, 
+    text: String, 
+    room: String, // KEY FIX: This allows the database to store the room name
+    timestamp: { type: Date, default: Date.now }
 }));
+// ------------------------------
 
 // API Routes
 app.get('/api/users', async (req, res) => res.json(await User.find()));
@@ -42,20 +49,18 @@ app.post('/api/clear-chat', async (req, res) => {
 });
 app.get('/api/messages', async (req, res) => res.json(await Message.find().sort({ timestamp: 1 })));
 
-// --- UPDATED THIS SECTION ONLY TO BLOCK BANNED USERS ---
 app.post('/api/messages', async (req, res) => {
-    // Check if user still exists in DB before saving message
     const userExists = await User.findOne({ email: req.body.email });
     
     if (!userExists) {
         return res.status(403).json("Banned"); 
     }
 
+    // Now correctly includes the 'room' field from the frontend request
     const msg = new Message(req.body);
     await msg.save();
     res.json(msg);
 });
-// -------------------------------------------------------
 
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
