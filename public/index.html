@@ -17,7 +17,7 @@
         .input-area { background: white; padding: 20px; display: flex; gap: 10px; }
         input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
         #admin-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 1000; min-width: 300px; }
-        .delete-ico { cursor: pointer; margin-left: 10px; color: red; }
+        .delete-ico { cursor: pointer; margin-left: 10px; color: red; font-size: 14px; }
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #004d40; color: white; }
         .auth-container { background: white; padding: 20px; border-radius: 10px; color: black; width: 80%; max-width: 350px; text-align: center; margin: 10px; }
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
@@ -25,7 +25,7 @@
 </head>
 <body>
     <div id="auth-screen">
-        <h2>Emerald Park</h2>
+        <h2>Emerald Park Login</h2>
         <div class="auth-container">
             <h3>Login</h3>
             <input type="email" id="login-email" placeholder="Email"><br><br>
@@ -79,7 +79,7 @@
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
         setInterval(updateClock, 1000);
 
-        // Enter key support for safety and speed
+        // Enter key to send message
         document.getElementById("msg-input").addEventListener("keypress", (e) => { if(e.key === "Enter") sendMsg(); });
 
         function switchRoom(room) {
