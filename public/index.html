@@ -45,7 +45,7 @@
 
     <div id="chat-screen">
         <div class="header">
-            <span id="user-display">Pokec Live</span>
+            <span id="user-display">Chat Live | <span id="clock">00:00:00</span></span>
             <div style="display:flex; gap:10px;">
                 <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
                 <button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">X</button>
@@ -71,6 +71,16 @@
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
         let isAdmin = false;
+
+        // REAL-TIME CLOCK FUNCTION
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const clockElement = document.getElementById('clock');
+            if (clockElement) clockElement.innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
         // Auto-check on load
         if (userEmail) {
