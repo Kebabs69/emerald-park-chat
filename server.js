@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// This tells the server to look in 'public' for your website files
+// This tells the server to look in 'public' FIRST, then the main folder
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
@@ -16,9 +16,8 @@ const mongoURI = "mongodb+srv://mojeauta123_db_user:Apple12345@cluster0.2k2jps5.
 
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
-    .catch(err => console.log("❌ Database Error:", err));
+    .catch(err => console.log("❌ DB Error:", err));
 
-// Database Schemas
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, email: String, password: String, isAdmin: Boolean
 }));
@@ -27,7 +26,7 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     username: String, email: String, text: String, timestamp: { type: Date, default: Date.now }
 }));
 
-// Admin API Routes
+// API Routes
 app.get('/api/users', async (req, res) => res.json(await User.find()));
 app.post('/api/ban', async (req, res) => {
     await User.findOneAndDelete({ email: req.body.email });
@@ -42,8 +41,6 @@ app.post('/api/clear-chat', async (req, res) => {
     await Message.deleteMany({});
     res.json({ success: true });
 });
-
-// Chat API Routes
 app.get('/api/messages', async (req, res) => res.json(await Message.find().sort({ timestamp: 1 })));
 app.post('/api/messages', async (req, res) => {
     const msg = new Message(req.body);
@@ -55,7 +52,7 @@ app.get('/api/user-status', async (req, res) => {
     res.json({ isAdmin: user ? user.isAdmin : false });
 });
 
-// Login/Register Logic
+// Auth Logic
 app.post('/api/register', async (req, res) => {
     const count = await User.countDocuments();
     const user = new User({...req.body, isAdmin: count === 0});
@@ -67,13 +64,11 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// THE FINAL FIX: This forces the server to load index.html as the homepage
+// THE EMERGENCY FIX: This stops the loading loop and forces the page to open
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
-        if (err) {
-            res.sendFile(path.join(__dirname, 'index.html'));
-        }
+        if (err) res.sendFile(path.join(__dirname, 'index.html'));
     });
 });
 
-app.listen(10000, () => console.log("🚀 Server Live on Port 10000"));
+app.listen(10000, () => console.log("🚀 Server Live"));
