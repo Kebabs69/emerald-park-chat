@@ -37,7 +37,6 @@
             <input type="password" id="login-pass" placeholder="Password">
             <button onclick="handleLogin()" style="width:100%; padding:10px; background: #28a745; color:white; border:none; border-radius:5px; cursor:pointer;">LOGIN</button>
         </div>
-
         <div class="auth-container">
             <h3>Register</h3>
             <input type="text" id="reg-user" placeholder="Username">
@@ -81,7 +80,7 @@
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
         let isAdmin = false;
-        let currentRoom = 'General';
+        let currentRoom = 'General'; // Track the room
 
         function updateClock() {
             const now = new Date();
@@ -96,8 +95,7 @@
             document.querySelectorAll('.room-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText === room);
             });
-            // Clear the box immediately so old room messages don't linger while loading
-            document.getElementById('chat-box').innerHTML = '';
+            document.getElementById('chat-box').innerHTML = ''; // Immediate UI feedback
             loadMessages(); 
         }
 
@@ -137,7 +135,6 @@
                 body: JSON.stringify({ username: usernameInput, email, password })
             });
             if(res.ok) alert("Account created!");
-            else alert("Error.");
         }
 
         function logout() { localStorage.clear(); location.reload(); }
@@ -156,10 +153,9 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
             
-            // KEY FIX: Filter the messages by the room they belong to
+            // KEY FIX: Filtering messages so Flirt doesn't go to General
             const filteredMessages = messages.filter(m => {
                 if (currentRoom === 'General') {
-                    // Show message if it has no room tag OR is tagged 'General'
                     return !m.room || m.room === 'General';
                 }
                 return m.room === currentRoom;
@@ -185,7 +181,7 @@
                     email: userEmail, 
                     username, 
                     text, 
-                    room: currentRoom // KEY FIX: Tag the message with the current room
+                    room: currentRoom // KEY FIX: Tagging the message
                 })
             });
             if (res.status === 403) { alert("BANNED!"); logout(); return; }
