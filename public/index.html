@@ -7,62 +7,56 @@
     <style>
         body { font-family: sans-serif; background-color: #e5e5e5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         .header { background: #004d40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Rooms Bar Styling */
         .rooms-bar { background: #00695c; color: white; padding: 10px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .room-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+        .room-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.3s; }
+        .room-btn:hover { background: rgba(255,255,255,0.4); }
         .room-btn.active { background: white; color: #004d40; font-weight: bold; }
-
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .message { background: white; padding: 10px 15px; border-radius: 10px; max-width: 70%; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .message { background: white; padding: 10px 15px; border-radius: 10px; max-width: 70%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); word-wrap: break-word; }
         .admin-btn { background: #004d40; border: 1px solid white; color: white; padding: 5px 10px; cursor: pointer; border-radius: 5px; font-weight: bold; }
         .input-area { background: white; padding: 20px; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; margin: 5px 0; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
         #admin-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 1000; min-width: 300px; }
-        .delete-ico { cursor: pointer; margin-left: 10px; color: red; font-size: 14px; }
-        .ban-btn { background: #ff4444; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
-        
+        .delete-ico { cursor: pointer; margin-left: 10px; color: red; }
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #004d40; color: white; }
         .auth-container { background: white; padding: 20px; border-radius: 10px; color: black; width: 80%; max-width: 350px; text-align: center; margin: 10px; }
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
     </style>
 </head>
 <body>
-
     <div id="auth-screen">
-        <h2 style="margin-bottom: 20px;">Emerald Park Login</h2>
+        <h2>Emerald Park</h2>
         <div class="auth-container">
             <h3>Login</h3>
-            <input type="email" id="login-email" placeholder="Email">
-            <input type="password" id="login-pass" placeholder="Password">
+            <input type="email" id="login-email" placeholder="Email"><br><br>
+            <input type="password" id="login-pass" placeholder="Password"><br><br>
             <button onclick="handleLogin()" style="width:100%; padding:10px; background: #28a745; color:white; border:none; border-radius:5px; cursor:pointer;">LOGIN</button>
         </div>
         <div class="auth-container">
             <h3>Register</h3>
-            <input type="text" id="reg-user" placeholder="Username">
-            <input type="email" id="reg-email" placeholder="Email">
-            <input type="password" id="reg-pass" placeholder="Password">
+            <input type="text" id="reg-user" placeholder="Username"><br><br>
+            <input type="email" id="reg-email" placeholder="Email"><br><br>
+            <input type="password" id="reg-pass" placeholder="Password"><br><br>
             <button onclick="handleRegister()" style="width:100%; padding:10px; background: #007bff; color:white; border:none; border-radius:5px; cursor:pointer;">CREATE ACCOUNT</button>
         </div>
     </div>
 
     <div id="chat-screen">
         <div class="header">
-            <span id="user-display">Pokec Live | <span id="clock">00:00:00</span></span>
+            <span>Pokec Live | <span id="clock">00:00:00</span></span>
             <div style="display:flex; gap:10px;">
                 <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
                 <button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">X</button>
             </div>
         </div>
-
         <div class="rooms-bar">
-            <button class="room-btn active" onclick="switchRoom('General')">General</button>
+            <button class="room-btn active" onclick="switchRoom('Dating site')">Dating site</button>
             <button class="room-btn" onclick="switchRoom('Flirt')">Flirt</button>
             <button class="room-btn" onclick="switchRoom('Cars')">Cars</button>
+            <button class="room-btn" onclick="switchRoom('Music')">Music</button>
+            <button class="room-btn" onclick="switchRoom('Games')">Games</button>
         </div>
-
         <div id="chat-box"></div>
-
         <div class="input-area">
             <input type="text" id="msg-input" placeholder="Type a message...">
             <button onclick="sendMsg()" style="background: none; border: none; cursor: pointer; font-size: 24px;">➤</button>
@@ -80,27 +74,22 @@
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
         let isAdmin = false;
-        let currentRoom = 'General'; // Track the room
+        let currentRoom = 'Dating site';
 
-        function updateClock() {
-            const now = new Date();
-            const clockElement = document.getElementById('clock');
-            if (clockElement) clockElement.innerText = now.toLocaleTimeString();
-        }
+        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
         setInterval(updateClock, 1000);
-        updateClock();
+
+        // Enter key support for safety and speed
+        document.getElementById("msg-input").addEventListener("keypress", (e) => { if(e.key === "Enter") sendMsg(); });
 
         function switchRoom(room) {
             currentRoom = room;
-            document.querySelectorAll('.room-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText === room);
-            });
-            document.getElementById('chat-box').innerHTML = ''; // Immediate UI feedback
+            document.querySelectorAll('.room-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === room));
+            document.getElementById('chat-box').innerHTML = '';
             loadMessages(); 
         }
 
         if (userEmail) enterChat();
-
         function enterChat() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'flex';
@@ -119,22 +108,21 @@
                 const user = await res.json();
                 localStorage.setItem('userEmail', user.email);
                 localStorage.setItem('username', user.username);
-                userEmail = user.email;
-                username = user.username;
+                userEmail = user.email; username = user.username;
                 enterChat();
-            } else { alert("Login failed!"); }
+            } else alert("Login failed!");
         }
 
         async function handleRegister() {
             const usernameInput = document.getElementById('reg-user').value;
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
-            const res = await fetch('/api/register', {
+            await fetch('/api/register', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ username: usernameInput, email, password })
             });
-            if(res.ok) alert("Account created!");
+            alert("Account created!");
         }
 
         function logout() { localStorage.clear(); location.reload(); }
@@ -153,11 +141,8 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
             
-            // KEY FIX: Filtering messages so Flirt doesn't go to General
             const filteredMessages = messages.filter(m => {
-                if (currentRoom === 'General') {
-                    return !m.room || m.room === 'General';
-                }
+                if (currentRoom === 'Dating site') return !m.room || m.room === 'Dating site';
                 return m.room === currentRoom;
             });
 
@@ -177,12 +162,7 @@
             const res = await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    email: userEmail, 
-                    username, 
-                    text, 
-                    room: currentRoom // KEY FIX: Tagging the message
-                })
+                body: JSON.stringify({ email: userEmail, username, text, room: currentRoom })
             });
             if (res.status === 403) { alert("BANNED!"); logout(); return; }
             document.getElementById('msg-input').value = '';
@@ -196,37 +176,17 @@
             list.innerHTML = '';
             users.forEach(u => {
                 const li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.padding = '5px 0';
-                const banBtn = u.email !== userEmail ? `<button class="ban-btn" onclick="banUser('${u.email}')">BAN</button>` : '<i>(Admin)</i>';
+                li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.padding = '5px 0';
+                const banBtn = u.email !== userEmail ? `<button style="background:red;color:white;border:none;cursor:pointer;" onclick="banUser('${u.email}')">BAN</button>` : '<i>(Admin)</i>';
                 li.innerHTML = `<span>${u.username}</span> ${banBtn}`;
                 list.appendChild(li);
             });
             document.getElementById('admin-modal').style.display = 'block';
         }
 
-        async function banUser(email) {
-            if (confirm(`Ban ${email}?`)) {
-                await fetch('/api/ban', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) });
-                openAdmin();
-            }
-        }
-
-        async function deleteMsg(id) {
-            if (confirm("Delete?")) {
-                await fetch(`/api/messages/${id}`, { method: 'DELETE' });
-                loadMessages();
-            }
-        }
-
-        async function clearAllChat() {
-            if (confirm("Clear all?")) {
-                await fetch('/api/clear-chat', { method: 'POST' });
-                loadMessages();
-                document.getElementById('admin-modal').style.display = 'none';
-            }
-        }
+        async function banUser(email) { if (confirm(`Ban ${email}?`)) { await fetch('/api/ban', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) }); openAdmin(); } }
+        async function deleteMsg(id) { if (confirm("Delete?")) { await fetch(`/api/messages/${id}`, { method: 'DELETE' }); loadMessages(); } }
+        async function clearAllChat() { if (confirm("Clear all?")) { await fetch('/api/clear-chat', { method: 'POST' }); loadMessages(); document.getElementById('admin-modal').style.display = 'none'; } }
 
         setInterval(loadMessages, 3000);
     </script>
