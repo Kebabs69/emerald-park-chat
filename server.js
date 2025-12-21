@@ -16,25 +16,25 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// Updated User Schema to include avatar (Profile Picture)
+// Updated User Schema: Now stores the chosen avatar
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: String, 
     password: String, 
     isAdmin: Boolean,
-    avatar: { type: String, default: '👤' } // Default avatar if none chosen
+    avatar: { type: String, default: '👤' } 
 }));
 
+// Updated Message Schema: Stores the avatar with the message
 const Message = mongoose.model('Message', new mongoose.Schema({
     username: String, 
     email: String, 
     text: String, 
     room: String, 
-    avatar: String, // Store avatar with the message for fast loading
+    avatar: String, 
     timestamp: { type: Date, default: Date.now }
 }));
 
-// API Routes
 app.get('/api/users', async (req, res) => res.json(await User.find()));
 app.post('/api/ban', async (req, res) => {
     await User.findOneAndDelete({ email: req.body.email });
@@ -55,13 +55,13 @@ app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("Banned"); 
 
-    // SAFETY 1ST: Strip out any <script> tags to prevent hacking
+    // Safety 1st: Remove hacking scripts
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
 
     const msg = new Message({
         ...req.body,
         text: cleanText,
-        avatar: user.avatar // Attach user's chosen profile pic to message
+        avatar: user.avatar // Attach the user's specific picture here
     });
     await msg.save();
     res.json(msg);
@@ -77,7 +77,7 @@ app.post('/api/register', async (req, res) => {
     const user = new User({
         ...req.body, 
         isAdmin: count === 0,
-        avatar: req.body.avatar || '👤'
+        avatar: req.body.avatar || '👤' // Save chosen avatar
     });
     await user.save();
     res.json(user);
