@@ -11,7 +11,7 @@
         .room-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.3s; }
         .room-btn.active { background: white; color: #004d40; font-weight: bold; }
         
-        /* GLOWING SUPPORT BUTTON */
+        /* NEW GLOWING SUPPORT BUTTON STYLE */
         .support-btn { 
             background: #ffdd00 !important; 
             color: black !important; 
@@ -106,25 +106,25 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
 
-            // ANONYMOUS SUPPORT ROOM CONTENT
+            // SUPPORT ROOM CONTENT
             if(room === 'Support Account') {
                 box.innerHTML = `
                     <div style="background:white; padding:30px; border-radius:15px; text-align:center; border: 2px solid #ffdd00; max-width: 500px; margin: auto;">
                         <h2 style="color:#000;">Support the Creator</h2>
-                        <p>Your support keeps this chat free and safe for everyone! ☕</p>
+                        <p>Help keep this chat free for everyone! ☕</p>
                         
-                        <a href="https://www.buymeacoffee.com/YOUR_USERNAME" target="_blank" 
+                        <a href="https://www.buymeacoffee.com/buymeacoffee.com/chattless" target="_blank" 
                            style="background:#ffdd00; color:#000; padding:15px 25px; border-radius:10px; text-decoration:none; font-weight:bold; display:inline-block; margin:20px 0; border: 1px solid #ccc;">
-                           💳 Support with Card / Apple Pay
+                           💳 Send Anonymous Support
                         </a>
 
                         <div style="text-align:left; font-size:13px; color:#555; background:#f9f9f9; padding:15px; border-radius:10px;">
                             <strong>ANONYMOUS REWARDS:</strong><br>
                             ⭐ <b>VIP Badge</b> next to your name<br>
-                            🛡️ <b>Privacy</b>: Users never see your payment info<br>
-                            ✨ <b>Special Status</b>: Stand out in every room
+                            🚫 <b>No Ads</b> on the site<br>
+                            🛡️ <b>Privacy</b>: No one will see your payment details
                         </div>
-                        <p style="color:red; font-size:12px; margin-top:15px; font-weight:bold;">Message the Admin after donating to get your badge!</p>
+                        <p style="color:red; font-size:12px; margin-top:15px; font-weight:bold;">Message the Admin after supporting to get your badge!</p>
                     </div>`;
                 return;
             }
