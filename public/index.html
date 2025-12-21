@@ -8,7 +8,7 @@
         body { font-family: sans-serif; background-color: #e5e5e5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         .header { background: #004d40; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* NEW ROOMS BAR STYLE */
+        /* NEW: Rooms Bar Styling */
         .rooms-bar { background: #00695c; color: white; padding: 10px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .room-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; }
         .room-btn.active { background: white; color: #004d40; font-weight: bold; }
@@ -51,7 +51,7 @@
 
     <div id="chat-screen">
         <div class="header">
-            <span id="user-display" style="font-weight: bold;">Chat Live | <span id="clock" style="font-weight: normal;">00:00:00</span></span>
+            <span id="user-display">Chat Live | <span id="clock">00:00:00</span></span>
             <div style="display:flex; gap:10px;">
                 <button id="admin-panel-btn" class="admin-btn" style="display:none;" onclick="openAdmin()">ADMIN</button>
                 <button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">X</button>
@@ -62,7 +62,6 @@
             <button class="room-btn active" onclick="switchRoom('General')">General</button>
             <button class="room-btn" onclick="switchRoom('Flirt')">Flirt</button>
             <button class="room-btn" onclick="switchRoom('Cars')">Cars</button>
-            <button class="room-btn" onclick="switchRoom('VIP')">VIP 💎</button>
         </div>
 
         <div id="chat-box"></div>
@@ -84,7 +83,7 @@
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
         let isAdmin = false;
-        let currentRoom = 'General'; // Track current room
+        let currentRoom = 'General'; // NEW: Track the current room
 
         // REAL-TIME CLOCK FUNCTION
         function updateClock() {
@@ -96,18 +95,15 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // SWITCH ROOM FUNCTION
+        // NEW: Switch Room Function
         function switchRoom(room) {
             currentRoom = room;
-            // Update UI buttons
             document.querySelectorAll('.room-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText.includes(room));
+                btn.classList.toggle('active', btn.innerText === room);
             });
-            // Reload messages for the specific room
-            loadMessages();
+            loadMessages(); // Reload and filter for the new room
         }
 
-        // Auto-check on load
         if (userEmail) {
             enterChat();
         }
@@ -176,11 +172,16 @@
             const messages = await res.json();
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
+            
+            // NEW: Filter messages so only those for the current room appear
+            const filteredMessages = messages.filter(m => {
+                if (currentRoom === 'General') {
+                    return !m.room || m.room === 'General';
+                }
+                return m.room === currentRoom;
+            });
 
-            // Filter messages based on the current room
-            const roomMessages = messages.filter(m => m.room === currentRoom || (!m.room && currentRoom === 'General'));
-
-            roomMessages.forEach(m => {
+            filteredMessages.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'message';
                 const trash = isAdmin ? `<span class="delete-ico" onclick="deleteMsg('${m._id}')">🗑️</span>` : '';
@@ -196,7 +197,12 @@
             const res = await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: userEmail, username, text, room: currentRoom }) // Send room info
+                body: JSON.stringify({ 
+                    email: userEmail, 
+                    username, 
+                    text, 
+                    room: currentRoom // NEW: Tag the message with the room name
+                })
             });
             if (res.status === 403) {
                 alert("YOU ARE BANNED!");
