@@ -7,11 +7,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// This tells the server to look in 'public' FIRST, then the main folder
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// Verified connection with password 'Apple12345'
+// Kept your original password exactly as requested
 const mongoURI = "mongodb+srv://mojeauta123_db_user:Apple12345@cluster0.2k2jps5.mongodb.net/PokecDB?retryWrites=true&w=majority";
 
 mongoose.connect(mongoURI)
@@ -42,17 +41,27 @@ app.post('/api/clear-chat', async (req, res) => {
     res.json({ success: true });
 });
 app.get('/api/messages', async (req, res) => res.json(await Message.find().sort({ timestamp: 1 })));
+
+// --- UPDATED THIS SECTION ONLY TO BLOCK BANNED USERS ---
 app.post('/api/messages', async (req, res) => {
+    // Check if user still exists in DB before saving message
+    const userExists = await User.findOne({ email: req.body.email });
+    
+    if (!userExists) {
+        return res.status(403).json("Banned"); 
+    }
+
     const msg = new Message(req.body);
     await msg.save();
     res.json(msg);
 });
+// -------------------------------------------------------
+
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
     res.json({ isAdmin: user ? user.isAdmin : false });
 });
 
-// Auth Logic
 app.post('/api/register', async (req, res) => {
     const count = await User.countDocuments();
     const user = new User({...req.body, isAdmin: count === 0});
@@ -64,7 +73,6 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// THE EMERGENCY FIX: This stops the loading loop and forces the page to open
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
         if (err) res.sendFile(path.join(__dirname, 'index.html'));
