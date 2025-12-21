@@ -16,16 +16,16 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// Updated User Schema: Now stores the chosen avatar
+// Stores user profile including the avatar
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
-    email: { type: String, unique: true, required: true }, // Ensures unique emails in DB
+    email: { type: String, unique: true, required: true }, 
     password: String, 
     isAdmin: Boolean,
     avatar: { type: String, default: '👤' } 
 }));
 
-// Updated Message Schema: Stores the avatar with the message
+// Saves message with the corresponding room name
 const Message = mongoose.model('Message', new mongoose.Schema({
     username: String, 
     email: String, 
@@ -59,13 +59,12 @@ app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("Banned"); 
 
-    // Safety 1st: Remove hacking scripts
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
 
     const msg = new Message({
         ...req.body,
         text: cleanText,
-        avatar: user.avatar // Attach the user's specific picture here
+        avatar: user.avatar 
     });
     await msg.save();
     res.json(msg);
@@ -76,25 +75,18 @@ app.get('/api/user-status', async (req, res) => {
     res.json({ isAdmin: user ? user.isAdmin : false });
 });
 
-// UPDATED REGISTER: Prevents crash if email is duplicate
+// Register route with crash protection for duplicate emails
 app.post('/api/register', async (req, res) => {
     try {
         const { email, username, password, avatar } = req.body;
-        
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ error: "Email already registered!" });
         }
-
         const count = await User.countDocuments();
         const user = new User({
-            username,
-            email,
-            password,
-            avatar: avatar || '👤',
-            isAdmin: count === 0
+            username, email, password, avatar: avatar || '👤', isAdmin: count === 0
         });
-
         await user.save();
         res.json({ success: true });
     } catch (err) {

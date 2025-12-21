@@ -11,10 +11,8 @@
         .room-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.3s; }
         .room-btn.active { background: white; color: #004d40; font-weight: bold; }
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        
         .message { background: white; padding: 10px 15px; border-radius: 10px; max-width: 80%; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .avatar-circle { font-size: 26px; background: #f0f0f0; border-radius: 50%; padding: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-        
         .input-area { background: white; padding: 20px; display: flex; gap: 10px; }
         input, select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; margin: 5px 0; }
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #004d40; color: white; overflow-y: auto; }
@@ -47,6 +45,7 @@
                 <option value="🐶">Dog Lover</option>
                 <option value="👑">VIP Crown</option>
                 <option value="🔥">Fire Avatar</option>
+                <option value="🍀">Lucky Leaf</option>
             </select><br>
             
             <button onclick="handleRegister()" style="width:100%; padding:10px; background: #007bff; color:white; border:none; border-radius:5px; margin-top:10px; cursor:pointer;">CREATE ACCOUNT</button>
@@ -55,7 +54,7 @@
 
     <div id="chat-screen">
         <div class="header">
-            <span>Pokec Live | <span id="clock">00:00:00</span></span>
+            <span>Emerald Park | <span id="clock">00:00:00</span></span>
             <div style="display:flex; gap:10px;">
                 <button id="admin-panel-btn" style="display:none; background:#004d40; border:1px solid white; color:white; cursor:pointer;" onclick="openAdmin()">ADMIN</button>
                 <button onclick="logout()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">X</button>
@@ -82,7 +81,7 @@
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
         let isAdmin = false;
-        let currentRoom = 'Dating site';
+        let currentRoom = 'Dating site'; // Default room is Dating site
 
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
         setInterval(updateClock, 1000);
@@ -121,15 +120,14 @@
             } else alert("Login failed!");
         }
 
-        // VALIDATION UPDATED HERE
         async function handleRegister() {
             const usernameInput = document.getElementById('reg-user').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
             const avatar = document.getElementById('reg-avatar').value;
 
+            // Added email format validation
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
             if (!emailPattern.test(email)) {
                 alert("Please enter a valid email address!");
                 return;
@@ -140,12 +138,11 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ username: usernameInput, email, password, avatar })
             });
-
             if (res.ok) {
                 alert("Account created! Please Login.");
             } else {
                 const data = await res.json();
-                alert(data.error || "Failed");
+                alert(data.error || "Registration failed!");
             }
         }
 
@@ -165,6 +162,7 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
             
+            // Logic to handle room filtering
             const filteredMessages = messages.filter(m => {
                 if (currentRoom === 'Dating site') return !m.room || m.room === 'Dating site';
                 return m.room === currentRoom;
