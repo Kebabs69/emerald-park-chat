@@ -19,7 +19,7 @@ mongoose.connect(mongoURI)
 // Updated User Schema: Now stores the chosen avatar
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
-    email: String, 
+    email: { type: String, unique: true, required: true }, // Ensures unique emails in DB
     password: String, 
     isAdmin: Boolean,
     avatar: { type: String, default: '👤' } 
@@ -36,19 +36,23 @@ const Message = mongoose.model('Message', new mongoose.Schema({
 }));
 
 app.get('/api/users', async (req, res) => res.json(await User.find()));
+
 app.post('/api/ban', async (req, res) => {
     await User.findOneAndDelete({ email: req.body.email });
     await Message.deleteMany({ email: req.body.email });
     res.json({ success: true });
 });
+
 app.delete('/api/messages/:id', async (req, res) => {
     await Message.findByIdAndDelete(req.params.id);
     res.json({ success: true });
 });
+
 app.post('/api/clear-chat', async (req, res) => {
     await Message.deleteMany({});
     res.json({ success: true });
 });
+
 app.get('/api/messages', async (req, res) => res.json(await Message.find().sort({ timestamp: 1 })));
 
 app.post('/api/messages', async (req, res) => {
@@ -72,15 +76,30 @@ app.get('/api/user-status', async (req, res) => {
     res.json({ isAdmin: user ? user.isAdmin : false });
 });
 
+// UPDATED REGISTER: Prevents crash if email is duplicate
 app.post('/api/register', async (req, res) => {
-    const count = await User.countDocuments();
-    const user = new User({
-        ...req.body, 
-        isAdmin: count === 0,
-        avatar: req.body.avatar || '👤' // Save chosen avatar
-    });
-    await user.save();
-    res.json(user);
+    try {
+        const { email, username, password, avatar } = req.body;
+        
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "Email already registered!" });
+        }
+
+        const count = await User.countDocuments();
+        const user = new User({
+            username,
+            email,
+            password,
+            avatar: avatar || '👤',
+            isAdmin: count === 0
+        });
+
+        await user.save();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Server Error" });
+    }
 });
 
 app.post('/api/login', async (req, res) => {
