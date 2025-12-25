@@ -8,25 +8,24 @@
         :root { --p-green: #1B3022; --a-gold: #D4AF37; --bg: #FDFBF7; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        /* TRIPLE LOGO DISPLAY */
-        .logo-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 25px 0; }
-        .logo-s { width: 45px; height: 45px; background: var(--p-green); border: 2px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--a-gold); }
-        .logo-l { width: 85px; height: 85px; background: var(--p-green); border: 4px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--a-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .brand-text { text-align: center; font-size: 26px; font-weight: bold; color: var(--p-green); letter-spacing: 2px; margin-bottom: 20px; }
+        /* TRIPLE LOGO BRANDING */
+        .logo-row { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 30px 0; }
+        .logo-s { width: 50px; height: 50px; background: var(--p-green); border: 2px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 25px; color: var(--a-gold); }
+        .logo-l { width: 90px; height: 90px; background: var(--p-green); border: 4px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 45px; color: var(--a-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .brand-text { text-align: center; font-size: 28px; font-weight: bold; color: var(--p-green); letter-spacing: 2px; margin-bottom: 20px; }
 
         .header { background: var(--p-green); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--a-gold); }
         .rooms-bar { background: #264230; padding: 10px; display: flex; gap: 8px; overflow-x: auto; }
-        .room-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .room-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
         .room-btn.active { background: var(--a-gold); font-weight: bold; color: var(--p-green); }
         
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); display: flex; flex-direction: column; gap: 12px; }
-        .message { background: white; padding: 12px; border-radius: 12px; max-width: 85%; display: flex; gap: 12px; border-left: 4px solid var(--p-green); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .m-time { font-size: 10px; color: #888; display: block; margin-top: 5px; }
-        .avatar-circle { font-size: 24px; background: #eee; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .message { background: white; padding: 12px; border-radius: 12px; max-width: 80%; display: flex; gap: 12px; border-left: 4px solid var(--p-green); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .avatar-circle { font-size: 24px; background: #eee; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; }
 
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #e9ecef; }
-        .auth-card { background: white; padding: 25px; border-radius: 15px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .auth-card { background: white; padding: 30px; border-radius: 15px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .btn-p { width: 100%; padding: 12px; background: var(--p-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
     </style>
@@ -42,38 +41,26 @@
         <div class="auth-card">
             <input type="email" id="l-email" placeholder="Email">
             <input type="password" id="l-pass" placeholder="Password">
-            <button class="btn-p" onclick="handleLogin()">SIGN IN</button>
-        </div>
-        <div class="auth-card" style="background:#f8f9fa">
-            <h3>Join Us</h3>
-            <input type="text" id="r-user" placeholder="Username">
-            <input type="email" id="r-email" placeholder="Email">
-            <input type="password" id="r-pass" placeholder="Password">
-            <select id="r-avatar"><option value="👤">Standard</option><option value="👑">VIP Access</option></select>
-            <button class="btn-p" onclick="handleRegister()">REGISTER</button>
+            <button class="btn-p" onclick="handleLogin()">LOGIN</button>
         </div>
     </div>
 
     <div id="chat-screen">
-        <div class="header"><strong>CIVILITY CHAT ☕</strong> <button onclick="logout()" style="background:#c0392b; color:white; border:none; padding:5px 12px; border-radius:5px; cursor:pointer;">Logout</button></div>
+        <div class="header"><strong>CIVILITY CHAT ☕</strong> <button onclick="logout()">Logout</button></div>
         <div class="rooms-bar">
             <button class="room-btn active" onclick="switchRoom('General')">General</button>
-            <button class="room-btn" onclick="switchRoom('Dating site')">Dating</button>
-            <button class="room-btn" onclick="switchRoom('Gaming')">Gaming</button>
             <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 👑</button>
         </div>
         <div id="chat-box"></div>
-        <div style="background:white; padding:15px; display:flex; gap:10px; border-top:1px solid #ddd;">
-            <input type="text" id="msg-input" placeholder="Say something...">
-            <button onclick="sendMsg()" style="background:var(--p-green); color:white; border:none; padding:0 25px; border-radius:8px; cursor:pointer;">Send</button>
+        <div style="background:white; padding:15px; display:flex; gap:10px;">
+            <input type="text" id="msg-input" placeholder="Type a message...">
+            <button onclick="sendMsg()" class="btn-p" style="width:100px;">Send</button>
         </div>
     </div>
 
     <script>
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
-        let isAdmin = false;
-        let isVIP = false;
         let currentRoom = 'General';
 
         if (userEmail) enterChat();
@@ -81,7 +68,7 @@
         function enterChat() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'flex';
-            checkStatus();
+            loadMessages();
         }
 
         async function handleLogin() {
@@ -95,29 +82,7 @@
                 localStorage.setItem('userEmail', data.email);
                 localStorage.setItem('username', data.username);
                 location.reload();
-            } else alert("Error logging in");
-        }
-
-        async function handleRegister() {
-            await fetch('/api/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    username: document.getElementById('r-user').value, 
-                    email: document.getElementById('r-email').value, 
-                    password: document.getElementById('r-pass').value,
-                    avatar: document.getElementById('r-avatar').value
-                })
-            });
-            alert("Success!");
-        }
-
-        async function checkStatus() {
-            const res = await fetch(`/api/user-status?email=${userEmail}`);
-            const data = await res.json();
-            isAdmin = data.isAdmin;
-            isVIP = data.isVIP;
-            loadMessages();
+            } else alert("Login failed");
         }
 
         async function loadMessages() {
@@ -128,8 +93,7 @@
             messages.filter(m => m.room === currentRoom).forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'message';
-                const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                div.innerHTML = `<div class="avatar-circle">${m.avatar || '👤'}</div><div><strong>${m.username}</strong>: ${m.text} <span class="m-time">${time}</span></div>`;
+                div.innerHTML = `<div class="avatar-circle">${m.avatar || '👤'}</div><div><strong>${m.username}</strong>: ${m.text}</div>`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -145,8 +109,9 @@
                 body: JSON.stringify({ email: userEmail, username, text, room: currentRoom })
             });
 
+            // VIP Check: Logout if unauthorized
             if (res.status === 402) {
-                alert("⛔ ACCESS DENIED: VIP Lounge requires payment. You are being logged off.");
+                alert("VIP Only! Logging out.");
                 logout(); 
                 return;
             }
