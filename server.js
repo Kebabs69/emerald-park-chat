@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Absolute path fix for Render
+// Fix for Render file paths
 const publicPath = path.resolve(__dirname);
 app.use(express.static(publicPath));
 
@@ -72,10 +72,7 @@ app.post('/api/messages', async (req, res) => {
 
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
-    res.json({ 
-        isAdmin: user ? user.isAdmin : false,
-        isVIP: user ? user.isVIP : false 
-    });
+    res.json({ isAdmin: user ? user.isAdmin : false, isVIP: user ? user.isVIP : false });
 });
 
 app.post('/api/register', async (req, res) => {
@@ -95,10 +92,10 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// Root route fix: Explicitly serve index.html
-app.get('/', (req, res) => {
+// Root route - sends index.html
+app.get('*', (req, res) => {
     res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server Live on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server Live`));
