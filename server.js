@@ -50,6 +50,15 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
+// NEW: COLLECTION TO STORE UPGRADE REQUESTS IN MONGO
+const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
+    email: String,
+    username: String,
+    tier: String,
+    status: { type: String, default: 'Pending' },
+    timestamp: { type: Date, default: Date.now }
+}));
+
 // --- API ROUTES ---
 
 // FETCH MESSAGES
@@ -58,8 +67,6 @@ app.get('/api/messages', async (req, res) => {
         const { room } = req.query;
         let query = {};
         if (room) query.room = room;
-        
-        // Fetch last 100 messages to prevent lag
         const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
         res.json(messages);
     } catch (err) {
@@ -73,12 +80,10 @@ app.post('/api/messages', async (req, res) => {
         const user = await User.findOne({ email: req.body.email });
         if (!user) return res.status(403).json("User not found");
 
-        // VIP Room Security Check
         if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
             return res.status(402).json({ error: "VIP Membership Required" });
         }
 
-        // Security: Remove HTML and trim text
         let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
         if (cleanText.length === 0) return res.status(400).json("Message empty");
 
@@ -98,6 +103,25 @@ app.post('/api/messages', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Server failed to save message" });
     }
+});
+
+// NEW: API TO SAVE DATA TO MONGO FROM BUTTONS
+app.post('/api/support', async (req, res) => {
+    try {
+        const request = new SupportRequest(req.body);
+        await request.save(); // Saves the request to your MongoDB
+        
+        // Post a system notification in the chat
+        const msg = new Message({
+            username: "SYSTEM",
+            text: `📢 UPGRADE REQUEST: ${req.body.username} wants the ${req.body.tier}. Check the database!`,
+            room: "General",
+            avatar: "🎁",
+            isAdmin: true
+        });
+        await msg.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: "Request failed" }); }
 });
 
 // ADMIN DELETE ROUTE
@@ -147,7 +171,6 @@ app.get('/api/user-status', async (req, res) => {
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
-        // The very first user is the Founder/Admin
         const user = new User({ 
             ...req.body, 
             isAdmin: count === 0, 
@@ -204,7 +227,7 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log("------------------------------------------");
-    console.log(`🚀 EMERALD PARK SERVER RUNNING ON: ${PORT}`);
+    console.log(`🚀 SERVER RUNNING ON: ${PORT}`);
     console.log(`☕ DATABASE STATUS: CONNECTED`);
     console.log("------------------------------------------");
 });

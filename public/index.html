@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emerald Park | Elite Chat</title>
+    <title>Elite Chat | Professional Messaging</title>
     <style>
         :root { 
             --p-green: #1B3022; --a-gold: #D4AF37; --bg: #FDFBF7; 
@@ -56,12 +56,12 @@
 </head>
 <body>
     <div id="auth-screen">
-        <div class="logo-row"><div class="logo-s">☕</div><div class="logo-l">☕</div><div class="logo-s">☕</div></div>
+        <div class="logo-row"><div class="logo-s">💬</div><div class="logo-l">💬</div><div class="logo-s">💬</div></div>
         <div class="auth-card">
             <h2 style="text-align:center; color: var(--p-green);">Welcome Back</h2>
             <input type="email" id="l-email" placeholder="Email">
             <input type="password" id="l-pass" placeholder="Password">
-            <button class="btn-p" onclick="handleLogin()">ENTER PARK</button>
+            <button class="btn-p" onclick="handleLogin()">ENTER CHAT</button>
         </div>
         <div class="auth-card">
             <h3 style="margin-top:0;">Join the Elite</h3>
@@ -71,21 +71,21 @@
             <select id="r-avatar">
                 <option value="👤">Member 👤</option>
                 <option value="👑">VIP Crown 👑</option>
-                <option value="🌿">Park Ranger 🌿</option>
+                <option value="🌿">Ranger 🌿</option>
                 <option value="💎">Diamond 💎</option>
             </select>
-            <button class="btn-p" onclick="handleRegister()">CREATE PASSPORT</button>
+            <button class="btn-p" onclick="handleRegister()">CREATE ACCOUNT</button>
         </div>
     </div>
 
     <div id="chat-screen">
         <div class="header">
-            <div><strong>EMERALD PARK ☕</strong> <span id="room-title" style="margin-left:15px; font-weight:normal; opacity:0.8;">| General</span></div>
+            <div><strong>ELITE CHAT 💬</strong> <span id="room-title" style="margin-left:15px; font-weight:normal; opacity:0.8;">| General</span></div>
             <button onclick="logout()" style="background:none; border:1px solid white; color:white; border-radius:5px; cursor:pointer;">Exit</button>
         </div>
         <div class="rooms-bar">
             <button class="room-btn active" onclick="switchRoom('General')">Main Lobby</button>
-            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace (Dating)</button>
+            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace</button>
             <button class="room-btn" onclick="switchRoom('Gaming')">Arcade Room</button>
             <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 💎</button>
         </div>
@@ -107,6 +107,13 @@
                 <label style="font-size:11px; color:#888;">MY BIOGRAPHY</label>
                 <textarea id="my-bio" placeholder="Tell us about yourself..." style="height:80px; font-size:12px; margin-top:5px;"></textarea>
                 <button onclick="updateProfile()" class="btn-p" style="padding:8px; font-size:12px; background:var(--a-gold); color:var(--p-green);">Save Profile</button>
+                
+                <hr style="width:100%; margin:20px 0; border:0; border-top:1px solid #eee;">
+                <label style="font-size:11px; color:#888; font-weight:bold;">UPGRADE STATUS</label>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                    <button onclick="requestSupport('VIP Pass')" class="btn-p" style="font-size:11px; padding:8px; background:var(--vip-blue);">Request VIP 💎</button>
+                    <button onclick="requestSupport('Founder Tier')" class="btn-p" style="font-size:11px; padding:8px; background:var(--admin-red);">Request Founder 👑</button>
+                </div>
             </div>
         </div>
     </div>
@@ -152,7 +159,7 @@
                     avatar: document.getElementById('r-avatar').value
                 })
             });
-            alert("Registration successful! Welcome to the Park.");
+            alert("Registration successful! Welcome to the chat.");
         }
 
         async function checkStatus() {
@@ -207,6 +214,28 @@
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
+        }
+
+        // NEW SUPPORT FUNCTION
+        async function requestSupport(tier) {
+            if(!confirm(`Send a request to the admin for ${tier}?`)) return;
+            
+            const res = await fetch('/api/support', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    email: userEmail, 
+                    username: username, 
+                    tier: tier 
+                })
+            });
+
+            if(res.ok) {
+                alert("Your request has been logged. The Founder will contact you in the chat!");
+                loadMessages();
+            } else {
+                alert("Error sending request.");
+            }
         }
 
         async function sendMsg() {
