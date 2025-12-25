@@ -23,11 +23,11 @@ const User = mongoose.model('User', new mongoose.Schema({
     email: { type: String, unique: true, required: true }, 
     password: String, 
     isAdmin: Boolean,
-    isVIP: { type: Boolean, default: false }, // New field for monetization
+    isVIP: { type: Boolean, default: false }, 
     avatar: { type: String, default: '👤' } 
 }));
 
-// UPDATED SCHEMA: Messages now store if sender is Admin or VIP
+// UPDATED SCHEMA: Messages store if sender is Admin or VIP
 const Message = mongoose.model('Message', new mongoose.Schema({
     username: String, 
     email: String, 
@@ -47,9 +47,21 @@ app.post('/api/ban', async (req, res) => {
     res.json({ success: true });
 });
 
+// UPDATED: Added security check to ensure only admins can delete messages
 app.delete('/api/messages/:id', async (req, res) => {
-    await Message.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
+    try {
+        const adminEmail = req.query.adminEmail;
+        const user = await User.findOne({ email: adminEmail });
+        
+        if (user && user.isAdmin) {
+            await Message.findByIdAndDelete(req.params.id);
+            res.json({ success: true });
+        } else {
+            res.status(403).json({ error: "Unauthorized" });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Server Error" });
+    }
 });
 
 app.post('/api/clear-chat', async (req, res) => {
@@ -69,14 +81,13 @@ app.post('/api/messages', async (req, res) => {
         ...req.body,
         text: cleanText,
         avatar: user.avatar,
-        isAdmin: user.isAdmin, // Attaches Admin status to message
-        isVIP: user.isVIP      // Attaches VIP status to message
+        isAdmin: user.isAdmin,
+        isVIP: user.isVIP      
     });
     await msg.save();
     res.json(msg);
 });
 
-// UPDATED: Now returns both Admin and VIP status to the frontend
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
     res.json({ 
