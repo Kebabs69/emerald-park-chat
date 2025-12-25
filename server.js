@@ -5,8 +5,8 @@ const path = require('path');
 const fs = require('fs');
 
 /**
- * EMERALD PARK ADVANCED SERVER
- * Features: Profile Bio, Global Announcements, Admin Delete, 
+ * EMERALD PARK ADVANCED SERVER - EXPANDED VERSION
+ * Features: Dating DMs, Image Sharing, Moderation, Support Requests, 
  * Room Protection, and Static Asset Management.
  */
 
@@ -14,7 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// FORCE root directory for static files to prevent "missing index.html"
+// FORCE root directory for static files
 app.use(express.static(path.join(__dirname)));
 
 const mongoURI = process.env.MONGO_URI; 
@@ -30,6 +30,8 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true }, 
     isAdmin: { type: Boolean, default: false },
     isVIP: { type: Boolean, default: false }, 
+    isMuted: { type: Boolean, default: false }, // NEW
+    isBanned: { type: Boolean, default: false }, // NEW
     avatar: { type: String, default: '👤' },
     bio: { type: String, default: "Living life at Emerald Park!" },
     status: { type: String, default: "Online" },
@@ -45,12 +47,14 @@ const MessageSchema = new mongoose.Schema({
     avatar: String, 
     isAdmin: { type: Boolean, default: false }, 
     isVIP: { type: Boolean, default: false },
+    imageUrl: { type: String, default: null }, // NEW: Image Support
+    recipientEmail: { type: String, default: null }, // NEW: Private DMs
     isAnnouncement: { type: Boolean, default: false },
     timestamp: { type: Date, default: Date.now }
 });
 const Message = mongoose.model('Message', MessageSchema);
 
-// NEW: COLLECTION TO STORE UPGRADE REQUESTS IN MONGO
+// Your original Support Model
 const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     email: String,
     username: String,
@@ -59,34 +63,50 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// --- API ROUTES ---
-
-// FETCH MESSAGES
-app.get('/api/messages', async (req, res) => {
+// --- NEW MODERATION API ---
+app.post('/api/admin/action', async (req, res) => {
     try {
-        const { room } = req.query;
-        let query = {};
-        if (room) query.room = room;
-        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-        res.json(messages);
-    } catch (err) {
-        res.status(500).json({ error: "Could not fetch messages" });
-    }
+        const admin = await User.findOne({ email: req.body.adminEmail });
+        if (!admin || !admin.isAdmin) return res.status(403).json("Unauthorized");
+
+        let update = {};
+        if (req.body.action === 'ban') update = { isBanned: true };
+        if (req.body.action === 'mute') update = { isMuted: true };
+        if (req.body.action === 'unmute') update = { isMuted: false };
+        if (req.body.action === 'makeVIP') update = { isVIP: true };
+
+        await User.findOneAndUpdate({ email: req.body.targetEmail }, update);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json("Action failed"); }
 });
 
-// POST MESSAGE
+// --- API ROUTES ---
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        const { room, userEmail } = req.query;
+        let query = {};
+        if (room === 'DM') {
+            query = { room: 'DM', $or: [{ email: userEmail }, { recipientEmail: userEmail }] };
+        } else if (room) {
+            query.room = room;
+        }
+        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
+        res.json(messages);
+    } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
+});
+
 app.post('/api/messages', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
-        if (!user) return res.status(403).json("User not found");
+        if (!user || user.isBanned) return res.status(403).json("User banned");
+        if (user.isMuted) return res.status(403).json("User muted");
 
         if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
             return res.status(402).json({ error: "VIP Membership Required" });
         }
 
         let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
-        if (cleanText.length === 0) return res.status(400).json("Message empty");
-
         const msg = new Message({
             username: user.username,
             email: user.email,
@@ -95,118 +115,80 @@ app.post('/api/messages', async (req, res) => {
             avatar: user.avatar,
             isAdmin: user.isAdmin,
             isVIP: user.isVIP,
+            imageUrl: req.body.imageUrl || null,
+            recipientEmail: req.body.recipientEmail || null,
             isAnnouncement: (user.isAdmin && req.body.isAnnouncement)
         });
-
         await msg.save();
         res.json(msg);
-    } catch (err) {
-        res.status(500).json({ error: "Server failed to save message" });
-    }
+    } catch (err) { res.status(500).json({ error: "Server failed to save message" }); }
 });
 
-// NEW: API TO SAVE DATA TO MONGO FROM BUTTONS
 app.post('/api/support', async (req, res) => {
     try {
         const request = new SupportRequest(req.body);
-        await request.save(); // Saves the request to your MongoDB
-        
-        // Post a system notification in the chat
-        const msg = new Message({
-            username: "SYSTEM",
-            text: `📢 UPGRADE REQUEST: ${req.body.username} wants the ${req.body.tier}. Check the database!`,
-            room: "General",
-            avatar: "🎁",
-            isAdmin: true
+        await request.save();
+        const msg = new Message({ 
+            username: "SYSTEM", 
+            text: `📢 UPGRADE REQUEST: ${req.body.username} has requested ${req.body.tier}.`, 
+            room: "General", 
+            avatar: "🎁", 
+            isAdmin: true 
         });
         await msg.save();
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: "Request failed" }); }
+    } catch (err) { res.status(500).json({ error: "Support request failed" }); }
 });
 
-// ADMIN DELETE ROUTE
 app.delete('/api/messages/:id', async (req, res) => {
     try {
         const adminEmail = req.query.adminEmail;
         const user = await User.findOne({ email: adminEmail });
         if (user && user.isAdmin) {
             await Message.findByIdAndDelete(req.params.id);
-            res.json({ success: true, message: "Message purged by Admin" });
-        } else {
-            res.status(403).json({ error: "Unauthorized access" });
-        }
-    } catch (err) { 
-        res.status(500).json({ error: "Purge failed" }); 
-    }
+            res.json({ success: true });
+        } else { res.status(403).json("Unauthorized"); }
+    } catch (err) { res.status(500).json("Purge failed"); }
 });
 
-// USER PROFILE UPDATES
 app.post('/api/update-profile', async (req, res) => {
     try {
         const { email, bio, status, avatar } = req.body;
-        const updatedUser = await User.findOneAndUpdate(
-            { email }, 
-            { bio, status, avatar }, 
-            { new: true }
-        );
+        const updatedUser = await User.findOneAndUpdate({ email }, { bio, status, avatar }, { new: true });
         res.json(updatedUser);
-    } catch (err) {
-        res.status(500).json({ error: "Profile update failed" });
-    }
+    } catch (err) { res.status(500).json("Profile update failed"); }
 });
 
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
     if (!user) return res.status(404).json("User missing");
-    res.json({ 
-        isAdmin: user.isAdmin, 
-        isVIP: user.isVIP, 
-        bio: user.bio, 
-        status: user.status, 
-        avatar: user.avatar 
-    });
+    res.json(user);
 });
 
-// AUTHENTICATION
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
-        const user = new User({ 
-            ...req.body, 
-            isAdmin: count === 0, 
-            isVIP: count === 0 
-        });
+        const user = new User({ ...req.body, isAdmin: count === 0, isVIP: count === 0 });
         await user.save();
         res.json({ success: true });
-    } catch (err) { 
-        res.status(500).json({ error: "Registration failed. Email might exist." }); 
-    }
+    } catch (err) { res.status(500).json({ error: "Registration failed" }); }
 });
 
 app.post('/api/login', async (req, res) => {
     try {
-        const user = await User.findOne({ 
-            email: req.body.email, 
-            password: req.body.password 
-        });
-        if (user) {
-            res.json(user);
-        } else {
-            res.status(401).json("Invalid credentials");
-        }
-    } catch (err) {
-        res.status(500).json("Login error");
-    }
+        const user = await User.findOne({ email: req.body.email, password: req.body.password });
+        if (user && user.isBanned) return res.status(403).json("Account Banned");
+        if (user) { res.json(user); } else { res.status(401).json("Invalid credentials"); }
+    } catch (err) { res.status(500).json("Login error"); }
 });
 
-// --- SEARCH FIX: SERVE HTML IN ALL FOLDERS ---
+// Your Original Search Fix for Render
 app.get('*', (req, res) => {
     const possiblePaths = [
         path.join(__dirname, 'index.html'),
         path.join(__dirname, 'public', 'index.html'),
         path.join(process.cwd(), 'index.html')
     ];
-
     let found = false;
     for (let p of possiblePaths) {
         if (fs.existsSync(p)) {
@@ -215,19 +197,10 @@ app.get('*', (req, res) => {
             break;
         }
     }
-
     if (!found) {
-        res.status(404).send(`
-            <h1>404: Website Files Missing</h1>
-            <p>The server is running but index.html was not found in root.</p>
-        `);
+        res.status(404).send(`<h1>404: Website Files Missing</h1>`);
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log("------------------------------------------");
-    console.log(`🚀 SERVER RUNNING ON: ${PORT}`);
-    console.log(`☕ DATABASE STATUS: CONNECTED`);
-    console.log("------------------------------------------");
-});
+app.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON: ${PORT}`));

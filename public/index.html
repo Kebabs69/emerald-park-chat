@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Chat | Professional Messaging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite Chat | Emerald Park</title>
     <style>
         :root { 
             --p-green: #1B3022; --a-gold: #D4AF37; --bg: #FDFBF7; 
@@ -12,44 +12,49 @@
         
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* LOGO SECTION */
+        /* MOBILE UI POLISH */
+        @media (max-width: 768px) {
+            #profile-sidebar { display: none; }
+            .header { padding: 10px; }
+            .logo-row { margin: 10px 0; transform: scale(0.8); }
+        }
+
         .logo-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
         .logo-s { width: 45px; height: 45px; background: var(--p-green); border: 2px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--a-gold); }
         .logo-l { width: 85px; height: 85px; background: var(--p-green); border: 4px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--a-gold); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         
-        /* HEADER & NAVIGATION */
         .header { background: var(--p-green); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--a-gold); z-index: 10; }
         .rooms-bar { background: #264230; padding: 10px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .room-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px 18px; border-radius: 25px; cursor: pointer; transition: 0.3s; white-space: nowrap; }
         .room-btn.active { background: var(--a-gold); color: var(--p-green); font-weight: bold; transform: scale(1.05); }
         
-        /* CHAT INTERFACE */
         #main-container { display: flex; flex: 1; overflow: hidden; }
         #chat-section { flex: 1; display: flex; flex-direction: column; position: relative; }
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
         
-        /* MESSAGE STYLING */
-        .message { background: white; padding: 12px; border-radius: 12px; border-left: 5px solid var(--p-green); box-shadow: 0 3px 8px rgba(0,0,0,0.05); max-width: 85%; animation: slideIn 0.3s ease; position: relative; }
+        .message { background: white; padding: 12px; border-radius: 12px; border-left: 5px solid var(--p-green); box-shadow: 0 3px 8px rgba(0,0,0,0.05); max-width: 85%; animation: slideIn 0.3s ease; position: relative; cursor: pointer; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; }
         .badge-admin { background: var(--admin-red); }
         .badge-vip { background: var(--vip-blue); }
+        .badge-dm { background: #9b59b6; }
+
+        .msg-img { max-width: 100%; border-radius: 10px; margin-top: 10px; }
         
         .del-btn { color: var(--admin-red); cursor: pointer; font-size: 11px; float: right; font-weight: bold; opacity: 0.7; }
-        .del-btn:hover { opacity: 1; text-decoration: underline; }
 
-        /* SIDEBAR / PROFILE */
-        #profile-sidebar { width: 260px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.02); }
+        #profile-sidebar { width: 260px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.02); overflow-y: auto; }
         .sidebar-avatar { width: 100px; height: 100px; font-size: 50px; background: #eee; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
 
-        /* AUTHENTICATION */
+        #mod-panel { display: none; background: #fff1f1; border: 1px solid #ffcccc; padding: 10px; border-radius: 10px; margin-top: 15px; }
+        .mod-btn { font-size: 10px; padding: 5px; margin: 2px; border: none; border-radius: 4px; color: white; cursor: pointer; }
+
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #e9ecef 0%, #cbd3da 100%); }
         .auth-card { background: white; padding: 30px; border-radius: 20px; width: 320px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 20px; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
-        .btn-p { width: 100%; padding: 14px; background: var(--p-green); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-p:hover { background: #264230; transform: translateY(-2px); }
+        .btn-p { width: 100%; padding: 14px; background: var(--p-green); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
     </style>
@@ -85,7 +90,8 @@
         </div>
         <div class="rooms-bar">
             <button class="room-btn active" onclick="switchRoom('General')">Main Lobby</button>
-            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace</button>
+            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace ❤️</button>
+            <button class="room-btn" onclick="switchRoom('DM')">Private DMs 📩</button>
             <button class="room-btn" onclick="switchRoom('Gaming')">Arcade Room</button>
             <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 💎</button>
         </div>
@@ -93,7 +99,8 @@
         <div id="main-container">
             <div id="chat-section">
                 <div id="chat-box"></div>
-                <div style="background:white; padding:20px; display:flex; gap:12px; border-top:1px solid #ddd;">
+                <div style="background:white; padding:20px; display:flex; gap:12px; border-top:1px solid #ddd; align-items:center;">
+                    <button onclick="sendImage()" style="background:none; border:none; font-size:24px; cursor:pointer;">📷</button>
                     <input type="text" id="msg-input" placeholder="Compose a message..." style="flex:1; margin:0;">
                     <button onclick="sendMsg()" class="btn-p" style="width:100px;">SEND</button>
                 </div>
@@ -105,15 +112,22 @@
                 <p id="side-status" style="text-align:center; color: #2ecc71; font-size: 12px; font-weight:bold;">● Online</p>
                 <hr style="width:100%; margin:20px 0; border:0; border-top:1px solid #eee;">
                 <label style="font-size:11px; color:#888;">MY BIOGRAPHY</label>
-                <textarea id="my-bio" placeholder="Tell us about yourself..." style="height:80px; font-size:12px; margin-top:5px;"></textarea>
+                <textarea id="my-bio" placeholder="About me..."></textarea>
                 <button onclick="updateProfile()" class="btn-p" style="padding:8px; font-size:12px; background:var(--a-gold); color:var(--p-green);">Save Profile</button>
                 
+                <div id="mod-panel">
+                    <label style="font-size:11px; color:var(--admin-red); font-weight:bold;">ADMIN MODERATION</label>
+                    <input type="text" id="mod-target" placeholder="User Email" style="font-size:10px; padding:5px;">
+                    <button class="mod-btn" style="background:var(--admin-red)" onclick="adminAction('ban')">BAN</button>
+                    <button class="mod-btn" style="background:var(--admin-red)" onclick="adminAction('mute')">MUTE</button>
+                    <button class="mod-btn" style="background:#2ecc71" onclick="adminAction('unmute')">UNMUTE</button>
+                    <button class="mod-btn" style="background:var(--vip-blue)" onclick="adminAction('makeVIP')">VIP</button>
+                </div>
+
                 <hr style="width:100%; margin:20px 0; border:0; border-top:1px solid #eee;">
                 <label style="font-size:11px; color:#888; font-weight:bold;">UPGRADE STATUS</label>
-                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-                    <button onclick="requestSupport('VIP Pass')" class="btn-p" style="font-size:11px; padding:8px; background:var(--vip-blue);">Request VIP 💎</button>
-                    <button onclick="requestSupport('Founder Tier')" class="btn-p" style="font-size:11px; padding:8px; background:var(--admin-red);">Request Founder 👑</button>
-                </div>
+                <button onclick="requestSupport('VIP Pass')" class="btn-p" style="font-size:11px; padding:8px; background:var(--vip-blue); margin-top:5px;">Request VIP 💎</button>
+                <button onclick="requestSupport('Founder Tier')" class="btn-p" style="font-size:11px; padding:8px; background:var(--admin-red); margin-top:5px;">Request Founder 👑</button>
             </div>
         </div>
     </div>
@@ -121,7 +135,7 @@
     <script>
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
-        let isAdmin = false, isVIP = false, currentRoom = 'General';
+        let isAdmin = false, currentRoom = 'General';
 
         if (userEmail) enterChat();
 
@@ -135,10 +149,7 @@
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    email: document.getElementById('l-email').value, 
-                    password: document.getElementById('l-pass').value 
-                })
+                body: JSON.stringify({ email: document.getElementById('l-email').value, password: document.getElementById('l-pass').value })
             });
             if(res.ok) {
                 const data = await res.json();
@@ -159,63 +170,59 @@
                     avatar: document.getElementById('r-avatar').value
                 })
             });
-            alert("Registration successful! Welcome to the chat.");
+            alert("Success! Now please login.");
         }
 
         async function checkStatus() {
             const res = await fetch(`/api/user-status?email=${userEmail}`);
             const data = await res.json();
             isAdmin = data.isAdmin;
-            isVIP = data.isVIP;
             document.getElementById('side-avatar').innerText = data.avatar;
             document.getElementById('side-username').innerText = username;
             document.getElementById('my-bio').value = data.bio || "";
-            loadMessages(true); 
+            if(isAdmin) document.getElementById('mod-panel').style.display = 'block';
+            loadMessages(true);
         }
 
         async function updateProfile() {
             await fetch('/api/update-profile', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    email: userEmail, 
-                    bio: document.getElementById('my-bio').value 
-                })
+                body: JSON.stringify({ email: userEmail, bio: document.getElementById('my-bio').value })
             });
-            alert("Profile updated!");
+            alert("Profile saved!");
         }
 
-        // FIXED LOAD MESSAGES
         async function loadMessages(forceClear = false) {
-            const res = await fetch(`/api/messages?room=${currentRoom}`);
+            const res = await fetch(`/api/messages?room=${currentRoom}&userEmail=${userEmail}`);
             const messages = await res.json();
             const box = document.getElementById('chat-box');
-            
             if (forceClear) box.innerHTML = '';
             
             let addedNew = false;
             messages.forEach(m => {
-                // Unique ID check prevents jumping
                 if (!document.getElementById(`msg-${m._id}`)) {
                     const div = document.createElement('div');
                     div.id = `msg-${m._id}`;
                     div.className = 'message';
+                    div.onclick = () => startDM(m.email, m.username);
                     
                     const adminBadge = m.isAdmin ? `<span class="badge badge-admin">Founder</span>` : '';
                     const vipBadge = m.isVIP ? `<span class="badge badge-vip">VIP</span>` : '';
+                    const dmBadge = m.room === 'DM' ? `<span class="badge badge-dm">PRIVATE</span>` : '';
                     const del = isAdmin ? `<span class="del-btn" onclick="deleteMsg('${m._id}')">[Purge]</span>` : '';
+                    const img = m.imageUrl ? `<img src="${m.imageUrl}" class="msg-img">` : '';
                     
                     div.innerHTML = `
                         <div class="msg-header">
                             <span style="font-size:20px;">${m.avatar}</span>
                             <strong>${m.username}</strong>
-                            ${adminBadge} ${vipBadge}
+                            ${adminBadge} ${vipBadge} ${dmBadge}
                             ${del}
                         </div>
-                        <div style="color:#444; line-height:1.4;">${m.text}</div>
-                        <div style="font-size:9px; color:#aaa; margin-top:5px; text-align:right;">
-                            ${new Date(m.timestamp).toLocaleTimeString()}
-                        </div>
+                        <div style="color:#444;">${m.text}</div>
+                        ${img}
+                        <div style="font-size:9px; color:#aaa; margin-top:5px; text-align:right;">${new Date(m.timestamp).toLocaleTimeString()}</div>
                     `;
                     box.appendChild(div);
                     addedNew = true;
@@ -224,37 +231,66 @@
             if (addedNew) box.scrollTop = box.scrollHeight;
         }
 
-        async function requestSupport(tier) {
-            if(!confirm(`Send a request to the admin for ${tier}?`)) return;
-            const res = await fetch('/api/support', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: userEmail, username: username, tier: tier })
-            });
-            if(res.ok) {
-                alert("Your request has been logged!");
+        function startDM(email, name) {
+            if(email === userEmail) return;
+            if(confirm(`Send private message to ${name}?`)) {
+                const text = prompt("Message:");
+                if(text) {
+                    fetch('/api/messages', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ email: userEmail, text, room: 'DM', recipientEmail: email })
+                    });
+                }
+            }
+        }
+
+        async function sendImage() {
+            const url = prompt("Paste direct image URL:");
+            if(url) {
+                await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: userEmail, text: "Shared an image", imageUrl: url, room: currentRoom })
+                });
                 loadMessages();
             }
         }
 
+        async function adminAction(action) {
+            const target = document.getElementById('mod-target').value;
+            await fetch('/api/admin/action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminEmail: userEmail, targetEmail: target, action })
+            });
+            alert("Action done!");
+        }
+
+        async function requestSupport(tier) {
+            await fetch('/api/support', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: userEmail, username: username, tier })
+            });
+            alert("Request logged!");
+        }
+
         async function sendMsg() {
-            const textInput = document.getElementById('msg-input');
-            if(!textInput.value) return;
+            const input = document.getElementById('msg-input');
+            if(!input.value) return;
             const res = await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: userEmail, text: textInput.value, room: currentRoom })
+                body: JSON.stringify({ email: userEmail, text: input.value, room: currentRoom })
             });
-            if (res.status === 402) {
-                alert("This area requires a VIP Diamond Pass.");
-                return;
-            }
-            textInput.value = '';
+            if (res.status === 402) alert("VIP Required");
+            input.value = '';
             loadMessages();
         }
 
         async function deleteMsg(id) {
-            if(!confirm("Purge this message?")) return;
+            if(!confirm("Purge?")) return;
             const res = await fetch(`/api/messages/${id}?adminEmail=${userEmail}`, { method: 'DELETE' });
             if(res.ok) document.getElementById(`msg-${id}`)?.remove();
         }
@@ -262,9 +298,7 @@
         function switchRoom(room) {
             currentRoom = room;
             document.getElementById('room-title').innerText = `| ${room}`;
-            document.querySelectorAll('.room-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText.includes(room.split(' ')[0]));
-            });
+            document.querySelectorAll('.room-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(room.split(' ')[0])));
             loadMessages(true);
         }
 
