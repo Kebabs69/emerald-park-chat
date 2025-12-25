@@ -38,6 +38,18 @@
         .btn-p { width: 100%; padding: 14px; background: var(--p-green); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
     </style>
+    <style>
+    /* ... all your existing CSS ... */
+
+    /* --- MOBILE OPTIMIZATIONS --- */
+    @media (max-width: 768px) {
+        #profile-sidebar { display: none !important; }
+        #main-container { flex-direction: column; }
+        .message { max-width: 95% !important; }
+        .rooms-bar { justify-content: flex-start; }
+        #msg-input { font-size: 16px; } /* Stops iPhone zoom */
+    }
+</style>
 </head>
 <body>
     <div id="auth-screen">
