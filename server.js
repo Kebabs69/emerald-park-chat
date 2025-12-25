@@ -3,19 +3,25 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-
-/**
- * EMERALD PARK ADVANCED SERVER - EXPANDED VERSION
- * Features: Dating DMs, Image Sharing, Moderation, Support Requests, 
- * Room Protection, and Static Asset Management.
- */
+const multer = require('multer'); // NEW: Added for file uploads
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// FORCE root directory for static files
+// NEW: Create uploads folder if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+// NEW: Configure storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
+
 app.use(express.static(path.join(__dirname)));
+app.use('/uploads', express.static(uploadDir)); // NEW: Serve the uploads folder
 
 const mongoURI = process.env.MONGO_URI; 
 
@@ -30,8 +36,8 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true }, 
     isAdmin: { type: Boolean, default: false },
     isVIP: { type: Boolean, default: false }, 
-    isMuted: { type: Boolean, default: false }, // NEW
-    isBanned: { type: Boolean, default: false }, // NEW
+    isMuted: { type: Boolean, default: false }, 
+    isBanned: { type: Boolean, default: false },
     avatar: { type: String, default: '👤' },
     bio: { type: String, default: "Living life at Emerald Park!" },
     status: { type: String, default: "Online" },
@@ -47,14 +53,13 @@ const MessageSchema = new mongoose.Schema({
     avatar: String, 
     isAdmin: { type: Boolean, default: false }, 
     isVIP: { type: Boolean, default: false },
-    imageUrl: { type: String, default: null }, // NEW: Image Support
-    recipientEmail: { type: String, default: null }, // NEW: Private DMs
+    imageUrl: { type: String, default: null }, 
+    recipientEmail: { type: String, default: null }, 
     isAnnouncement: { type: Boolean, default: false },
     timestamp: { type: Date, default: Date.now }
 });
 const Message = mongoose.model('Message', MessageSchema);
 
-// Your original Support Model
 const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     email: String,
     username: String,
@@ -63,25 +68,28 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// --- NEW MODERATION API ---
+// NEW: File Upload Route
+app.post('/api/upload', upload.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).send('No file uploaded.');
+    res.json({ url: `/uploads/${req.file.filename}` });
+});
+
+// --- MODERATION API ---
 app.post('/api/admin/action', async (req, res) => {
     try {
         const admin = await User.findOne({ email: req.body.adminEmail });
         if (!admin || !admin.isAdmin) return res.status(403).json("Unauthorized");
-
         let update = {};
         if (req.body.action === 'ban') update = { isBanned: true };
         if (req.body.action === 'mute') update = { isMuted: true };
         if (req.body.action === 'unmute') update = { isMuted: false };
         if (req.body.action === 'makeVIP') update = { isVIP: true };
-
         await User.findOneAndUpdate({ email: req.body.targetEmail }, update);
         res.json({ success: true });
     } catch (err) { res.status(500).json("Action failed"); }
 });
 
 // --- API ROUTES ---
-
 app.get('/api/messages', async (req, res) => {
     try {
         const { room, userEmail } = req.query;
@@ -101,10 +109,7 @@ app.post('/api/messages', async (req, res) => {
         const user = await User.findOne({ email: req.body.email });
         if (!user || user.isBanned) return res.status(403).json("User banned");
         if (user.isMuted) return res.status(403).json("User muted");
-
-        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
-            return res.status(402).json({ error: "VIP Membership Required" });
-        }
+        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) return res.status(402).json({ error: "VIP Membership Required" });
 
         let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
         const msg = new Message({
@@ -182,24 +187,11 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
-// Your Original Search Fix for Render
 app.get('*', (req, res) => {
-    const possiblePaths = [
-        path.join(__dirname, 'index.html'),
-        path.join(__dirname, 'public', 'index.html'),
-        path.join(process.cwd(), 'index.html')
-    ];
+    const possiblePaths = [path.join(__dirname, 'index.html'), path.join(__dirname, 'public', 'index.html'), path.join(process.cwd(), 'index.html')];
     let found = false;
-    for (let p of possiblePaths) {
-        if (fs.existsSync(p)) {
-            res.sendFile(p);
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        res.status(404).send(`<h1>404: Website Files Missing</h1>`);
-    }
+    for (let p of possiblePaths) { if (fs.existsSync(p)) { res.sendFile(p); found = true; break; } }
+    if (!found) res.status(404).send(`<h1>404: Website Files Missing</h1>`);
 });
 
 const PORT = process.env.PORT || 10000;
