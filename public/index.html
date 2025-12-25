@@ -3,28 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emerald Park Chat</title>
+    <title>Emerald Park | Elite Chat</title>
     <style>
-        :root { --p-green: #1B3022; --a-gold: #D4AF37; --bg: #FDFBF7; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        :root { 
+            --p-green: #1B3022; --a-gold: #D4AF37; --bg: #FDFBF7; 
+            --admin-red: #e74c3c; --vip-blue: #3498db;
+        }
         
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* LOGO SECTION */
         .logo-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
         .logo-s { width: 45px; height: 45px; background: var(--p-green); border: 2px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--a-gold); }
-        .logo-l { width: 85px; height: 85px; background: var(--p-green); border: 4px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--a-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .logo-l { width: 85px; height: 85px; background: var(--p-green); border: 4px solid var(--a-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--a-gold); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         
-        .header { background: var(--p-green); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--a-gold); }
-        .rooms-bar { background: #264230; padding: 10px; display: flex; gap: 8px; overflow-x: auto; }
-        .room-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
-        .room-btn.active { background: var(--a-gold); font-weight: bold; color: var(--p-green); }
+        /* HEADER & NAVIGATION */
+        .header { background: var(--p-green); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--a-gold); z-index: 10; }
+        .rooms-bar { background: #264230; padding: 10px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .room-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px 18px; border-radius: 25px; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .room-btn.active { background: var(--a-gold); color: var(--p-green); font-weight: bold; transform: scale(1.05); }
         
-        #chat-box { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; }
-        .message { background: white; padding: 10px; border-radius: 10px; border-left: 4px solid var(--p-green); box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .del-btn { color: #e74c3c; cursor: pointer; font-size: 11px; float: right; font-weight: bold; }
+        /* CHAT INTERFACE */
+        #main-container { display: flex; flex: 1; overflow: hidden; }
+        #chat-section { flex: 1; display: flex; flex-direction: column; position: relative; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); display: flex; flex-direction: column; gap: 12px; }
         
-        #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #e9ecef; }
-        .auth-card { background: white; padding: 25px; border-radius: 15px; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-p { width: 100%; padding: 12px; background: var(--p-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        /* MESSAGE STYLING */
+        .message { background: white; padding: 12px; border-radius: 12px; border-left: 5px solid var(--p-green); box-shadow: 0 3px 8px rgba(0,0,0,0.05); max-width: 85%; animation: slideIn 0.3s ease; position: relative; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; }
+        .badge-admin { background: var(--admin-red); }
+        .badge-vip { background: var(--vip-blue); }
+        
+        .del-btn { color: var(--admin-red); cursor: pointer; font-size: 11px; float: right; font-weight: bold; opacity: 0.7; }
+        .del-btn:hover { opacity: 1; text-decoration: underline; }
+
+        /* SIDEBAR / PROFILE */
+        #profile-sidebar { width: 260px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.02); }
+        .sidebar-avatar { width: 100px; height: 100px; font-size: 50px; background: #eee; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
+
+        /* AUTHENTICATION */
+        #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #e9ecef 0%, #cbd3da 100%); }
+        .auth-card { background: white; padding: 30px; border-radius: 20px; width: 320px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        .btn-p { width: 100%; padding: 14px; background: var(--p-green); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-p:hover { background: #264230; transform: translateY(-2px); }
+
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
     </style>
 </head>
@@ -32,40 +58,63 @@
     <div id="auth-screen">
         <div class="logo-row"><div class="logo-s">☕</div><div class="logo-l">☕</div><div class="logo-s">☕</div></div>
         <div class="auth-card">
+            <h2 style="text-align:center; color: var(--p-green);">Welcome Back</h2>
             <input type="email" id="l-email" placeholder="Email">
             <input type="password" id="l-pass" placeholder="Password">
-            <button class="btn-p" onclick="handleLogin()">LOGIN</button>
+            <button class="btn-p" onclick="handleLogin()">ENTER PARK</button>
         </div>
         <div class="auth-card">
-            <h3>Register</h3>
+            <h3 style="margin-top:0;">Join the Elite</h3>
             <input type="text" id="r-user" placeholder="Username">
             <input type="email" id="r-email" placeholder="Email">
             <input type="password" id="r-pass" placeholder="Password">
-            <select id="r-avatar"><option value="👤">User</option><option value="👑">VIP</option></select>
-            <button class="btn-p" onclick="handleRegister()">CREATE ACCOUNT</button>
+            <select id="r-avatar">
+                <option value="👤">Member 👤</option>
+                <option value="👑">VIP Crown 👑</option>
+                <option value="🌿">Park Ranger 🌿</option>
+                <option value="💎">Diamond 💎</option>
+            </select>
+            <button class="btn-p" onclick="handleRegister()">CREATE PASSPORT</button>
         </div>
     </div>
 
     <div id="chat-screen">
-        <div class="header"><strong>EMERALD PARK ☕</strong> <button onclick="logout()">Logout</button></div>
-        <div class="rooms-bar">
-            <button class="room-btn active" onclick="switchRoom('General')">General</button>
-            <button class="room-btn" onclick="switchRoom('Dating site')">Dating</button>
-            <button class="room-btn" onclick="switchRoom('Gaming')">Gaming</button>
-            <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 👑</button>
+        <div class="header">
+            <div><strong>EMERALD PARK ☕</strong> <span id="room-title" style="margin-left:15px; font-weight:normal; opacity:0.8;">| General</span></div>
+            <button onclick="logout()" style="background:none; border:1px solid white; color:white; border-radius:5px; cursor:pointer;">Exit</button>
         </div>
-        <div id="chat-box"></div>
-        <div style="background:white; padding:15px; display:flex; gap:10px;">
-            <input type="text" id="msg-input" placeholder="Type a message..." style="flex:1;">
-            <button onclick="sendMsg()" class="btn-p" style="width:80px;">Send</button>
+        <div class="rooms-bar">
+            <button class="room-btn active" onclick="switchRoom('General')">Main Lobby</button>
+            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace (Dating)</button>
+            <button class="room-btn" onclick="switchRoom('Gaming')">Arcade Room</button>
+            <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 💎</button>
+        </div>
+
+        <div id="main-container">
+            <div id="chat-section">
+                <div id="chat-box"></div>
+                <div style="background:white; padding:20px; display:flex; gap:12px; border-top:1px solid #ddd;">
+                    <input type="text" id="msg-input" placeholder="Compose a message..." style="flex:1; margin:0;">
+                    <button onclick="sendMsg()" class="btn-p" style="width:100px;">SEND</button>
+                </div>
+            </div>
+
+            <div id="profile-sidebar">
+                <div class="sidebar-avatar" id="side-avatar">👤</div>
+                <h3 id="side-username" style="text-align:center; margin:0;">Username</h3>
+                <p id="side-status" style="text-align:center; color: #2ecc71; font-size: 12px; font-weight:bold;">● Online</p>
+                <hr style="width:100%; margin:20px 0; border:0; border-top:1px solid #eee;">
+                <label style="font-size:11px; color:#888;">MY BIOGRAPHY</label>
+                <textarea id="my-bio" placeholder="Tell us about yourself..." style="height:80px; font-size:12px; margin-top:5px;"></textarea>
+                <button onclick="updateProfile()" class="btn-p" style="padding:8px; font-size:12px; background:var(--a-gold); color:var(--p-green);">Save Profile</button>
+            </div>
         </div>
     </div>
 
     <script>
         let userEmail = localStorage.getItem('userEmail');
         let username = localStorage.getItem('username');
-        let isAdmin = false;
-        let currentRoom = 'General';
+        let isAdmin = false, isVIP = false, currentRoom = 'General';
 
         if (userEmail) enterChat();
 
@@ -79,14 +128,17 @@
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: document.getElementById('l-email').value, password: document.getElementById('l-pass').value })
+                body: JSON.stringify({ 
+                    email: document.getElementById('l-email').value, 
+                    password: document.getElementById('l-pass').value 
+                })
             });
             if(res.ok) {
                 const data = await res.json();
                 localStorage.setItem('userEmail', data.email);
                 localStorage.setItem('username', data.username);
                 location.reload();
-            } else alert("Fail");
+            } else alert("Access Denied");
         }
 
         async function handleRegister() {
@@ -100,58 +152,103 @@
                     avatar: document.getElementById('r-avatar').value
                 })
             });
-            alert("Success! Now log in.");
+            alert("Registration successful! Welcome to the Park.");
         }
 
         async function checkStatus() {
             const res = await fetch(`/api/user-status?email=${userEmail}`);
             const data = await res.json();
             isAdmin = data.isAdmin;
+            isVIP = data.isVIP;
+            document.getElementById('side-avatar').innerText = data.avatar;
+            document.getElementById('side-username').innerText = username;
+            document.getElementById('my-bio').value = data.bio || "";
             loadMessages();
         }
 
+        async function updateProfile() {
+            await fetch('/api/update-profile', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    email: userEmail, 
+                    bio: document.getElementById('my-bio').value 
+                })
+            });
+            alert("Profile updated!");
+        }
+
         async function loadMessages() {
-            const res = await fetch('/api/messages');
+            const res = await fetch(`/api/messages?room=${currentRoom}`);
             const messages = await res.json();
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
-            messages.filter(m => m.room === currentRoom).forEach(m => {
+            
+            messages.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'message';
-                const del = isAdmin ? `<span class="del-btn" onclick="deleteMsg('${m._id}')">[Delete]</span>` : '';
-                div.innerHTML = `<div><strong>${m.username}</strong>: ${m.text} ${del}</div>`;
+                
+                const adminBadge = m.isAdmin ? `<span class="badge badge-admin">Founder</span>` : '';
+                const vipBadge = m.isVIP ? `<span class="badge badge-vip">VIP</span>` : '';
+                const del = isAdmin ? `<span class="del-btn" onclick="deleteMsg('${m._id}')">[Purge]</span>` : '';
+                
+                div.innerHTML = `
+                    <div class="msg-header">
+                        <span style="font-size:20px;">${m.avatar}</span>
+                        <strong>${m.username}</strong>
+                        ${adminBadge} ${vipBadge}
+                        ${del}
+                    </div>
+                    <div style="color:#444; line-height:1.4;">${m.text}</div>
+                    <div style="font-size:9px; color:#aaa; margin-top:5px; text-align:right;">
+                        ${new Date(m.timestamp).toLocaleTimeString()}
+                    </div>
+                `;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         }
 
         async function sendMsg() {
-            const text = document.getElementById('msg-input').value;
-            if(!text) return;
+            const textInput = document.getElementById('msg-input');
+            if(!textInput.value) return;
+            
             const res = await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: userEmail, username, text, room: currentRoom })
+                body: JSON.stringify({ 
+                    email: userEmail, 
+                    text: textInput.value, 
+                    room: currentRoom 
+                })
             });
-            if (res.status === 402) { alert("VIP Required!"); logout(); return; }
-            document.getElementById('msg-input').value = '';
+
+            if (res.status === 402) {
+                alert("This area requires a VIP Diamond Pass.");
+                return;
+            }
+
+            textInput.value = '';
             loadMessages();
         }
 
         async function deleteMsg(id) {
-            if(!confirm("Delete?")) return;
+            if(!confirm("Purge this message from history?")) return;
             await fetch(`/api/messages/${id}?adminEmail=${userEmail}`, { method: 'DELETE' });
             loadMessages();
         }
 
         function switchRoom(room) {
             currentRoom = room;
-            document.querySelectorAll('.room-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(room.split(' ')[0])));
+            document.getElementById('room-title').innerText = `| ${room}`;
+            document.querySelectorAll('.room-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(room.split(' ')[0]));
+            });
             loadMessages();
         }
 
         function logout() { localStorage.clear(); location.reload(); }
-        setInterval(loadMessages, 3000);
+        setInterval(loadMessages, 4000);
     </script>
 </body>
 </html>
