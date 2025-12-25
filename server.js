@@ -6,6 +6,8 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// This tells the server where your files are
 app.use(express.static(__dirname));
 
 const mongoURI = process.env.MONGO_URI; 
@@ -14,6 +16,7 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
+// Models including your VIP logic
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -34,6 +37,7 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
+// API Routes
 app.delete('/api/messages/:id', async (req, res) => {
     try {
         const adminEmail = req.query.adminEmail;
@@ -93,6 +97,11 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     const user = await User.findOne({ email: req.body.email, password: req.body.password });
     user ? res.json(user) : res.status(401).json("Fail");
+});
+
+// CRITICAL FIX: This handles the "Cannot GET /" error
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;

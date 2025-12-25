@@ -9,7 +9,7 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
         /* Branding */
-        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container { text-align: center; margin: 20px 0; }
         .logo-circle { width: 80px; height: 80px; background: var(--primary-green); border: 3px solid var(--accent-gold); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 40px; color: var(--accent-gold); }
         .brand-name { font-size: 24px; font-weight: bold; color: var(--primary-green); margin-top: 10px; }
 
@@ -19,12 +19,12 @@
         .room-btn.active { background: var(--accent-gold); color: white; font-weight: bold; }
         
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; background: var(--soft-cream); display: flex; flex-direction: column; gap: 10px; }
-        .message { background: white; padding: 12px; border-radius: 12px; max-width: 80%; display: flex; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .message { background: white; padding: 12px; border-radius: 12px; max-width: 80%; display: flex; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 4px solid var(--primary-green); }
         .avatar-circle { font-size: 24px; background: #eee; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .del-btn { color: #d9534f; cursor: pointer; font-size: 11px; margin-left: 10px; font-weight: bold; text-decoration: none; }
         
         #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #e9ecef; }
-        .auth-container { background: white; padding: 25px; border-radius: 15px; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .auth-container { background: white; padding: 25px; border-radius: 15px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin: 8px 0; box-sizing: border-box; }
         button.primary-btn { width: 100%; padding: 12px; background: var(--primary-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         #chat-screen { display: none; flex-direction: column; height: 100vh; }
@@ -32,33 +32,39 @@
 </head>
 <body>
     <div id="auth-screen">
-        <div class="logo-container"><div class="logo-circle">☕</div><div class="brand-name">CIVILITY CHAT</div></div>
+        <div class="logo-container">
+            <div class="logo-circle">☕</div>
+            <div class="brand-name">CIVILITY CHAT</div>
+        </div>
         <div class="auth-container">
-            <h3>Login</h3>
+            <h3 style="margin-top:0">Welcome Back</h3>
             <input type="email" id="login-email" placeholder="Email">
             <input type="password" id="login-pass" placeholder="Password">
             <button class="primary-btn" onclick="handleLogin()">SIGN IN</button>
         </div>
         <div class="auth-container" style="background:#f8f9fa">
-            <h3>Register</h3>
+            <h3 style="margin-top:0">New Member</h3>
             <input type="text" id="reg-user" placeholder="Username">
             <input type="email" id="reg-email" placeholder="Email">
             <input type="password" id="reg-pass" placeholder="Password">
-            <select id="reg-avatar"><option value="👤">User</option><option value="👑">VIP</option></select>
+            <select id="reg-avatar">
+                <option value="👤">Standard</option>
+                <option value="👑">VIP Access</option>
+            </select>
             <button class="primary-btn" onclick="handleRegister()">CREATE ACCOUNT</button>
         </div>
     </div>
 
     <div id="chat-screen">
-        <div class="header"><strong>CIVILITY CHAT</strong><button onclick="logout()">Logout</button></div>
+        <div class="header"><strong>CIVILITY CHAT</strong> <button onclick="logout()" style="background:#c0392b; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Logout</button></div>
         <div class="rooms-bar">
             <button class="room-btn active" onclick="switchRoom('Dating site')">Dating Room</button>
             <button class="room-btn" onclick="switchRoom('Support Account')">Support</button>
         </div>
         <div id="chat-box"></div>
-        <div style="background:white; padding:15px; display:flex; gap:10px;">
+        <div style="background:white; padding:15px; display:flex; gap:10px; border-top:1px solid #ddd;">
             <input type="text" id="msg-input" placeholder="Message..." style="margin:0">
-            <button onclick="sendMsg()" style="background:var(--primary-green); color:white; border:none; padding:10px 20px; border-radius:8px;">Send</button>
+            <button onclick="sendMsg()" style="background:var(--primary-green); color:white; border:none; padding:0 20px; border-radius:8px; cursor:pointer;">Send</button>
         </div>
     </div>
 
@@ -88,10 +94,8 @@
                 const user = await res.json();
                 localStorage.setItem('userEmail', user.email);
                 localStorage.setItem('username', user.username);
-                userEmail = user.email;
-                username = user.username;
                 location.reload();
-            } else alert("Fail");
+            } else alert("Login Failed");
         }
 
         async function handleRegister() {
@@ -105,7 +109,7 @@
                     avatar: document.getElementById('reg-avatar').value
                 })
             });
-            if(res.ok) alert("Registered!");
+            if(res.ok) alert("Registered successfully!");
         }
 
         async function checkStatus() {
@@ -120,11 +124,12 @@
             const messages = await res.json();
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
-            messages.filter(m => m.room === currentRoom || !m.room).forEach(m => {
+            
+            messages.filter(m => m.room === currentRoom || (!m.room && currentRoom === 'Dating site')).forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'message';
                 const del = isAdmin ? `<a class="del-btn" onclick="deleteMsg('${m._id}')">[Delete]</a>` : '';
-                div.innerHTML = `<div class="avatar-circle">${m.avatar || '👤'}</div><div><strong>${m.username}</strong>: ${m.text}${del}</div>`;
+                div.innerHTML = `<div class="avatar-circle">${m.avatar || '👤'}</div><div><strong style="color:var(--primary-green)">${m.username}</strong>: ${m.text}${del}</div>`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -143,11 +148,17 @@
         }
 
         async function deleteMsg(id) {
+            if(!confirm("Are you sure?")) return;
             await fetch(`/api/messages/${id}?adminEmail=${userEmail}`, { method: 'DELETE' });
             loadMessages();
         }
 
-        function switchRoom(room) { currentRoom = room; loadMessages(); }
+        function switchRoom(room) {
+            currentRoom = room;
+            document.querySelectorAll('.room-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(room)));
+            loadMessages();
+        }
+
         function logout() { localStorage.clear(); location.reload(); }
         setInterval(loadMessages, 3000);
     </script>
