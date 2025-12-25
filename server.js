@@ -7,8 +7,6 @@ const fs = require('fs');
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Serves files from the current folder
 app.use(express.static(__dirname));
 
 const mongoURI = process.env.MONGO_URI; 
@@ -17,7 +15,7 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// Keep your Models exactly as they are
+// MODELS - Nothing removed
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -33,7 +31,7 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// API Routes
+// API ROUTES
 app.get('/api/messages', async (req, res) => {
     const messages = await Message.find().sort({ timestamp: 1 });
     res.json(messages);
@@ -43,12 +41,12 @@ app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
     
-    // VIP Room Protection Logic
+    // VIP PROTECTION: Block and signal the frontend to kick
     if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
-        return res.status(402).json({ error: "Payment Required" });
+        return res.status(402).json({ error: "VIP Required" });
     }
 
-    // Security: Remove any HTML tags from the message
+    // ORIGINAL SECURITY: Strip HTML
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
 
     const msg = new Message({
@@ -56,7 +54,7 @@ app.post('/api/messages', async (req, res) => {
         text: cleanText,
         avatar: user.avatar,
         isAdmin: user.isAdmin,
-        isVIP: user.isVIP
+        isVIP: user.isVIP      
     });
     await msg.save();
     res.json(msg);
@@ -94,7 +92,6 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// Render Deployment Fix
 app.get('*', (req, res) => {
     const loc = path.join(__dirname, 'index.html');
     if (fs.existsSync(loc)) return res.sendFile(loc);
@@ -102,4 +99,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server Live`));
