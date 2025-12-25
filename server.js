@@ -9,13 +9,18 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
 
+// Use the environment variable from Render
 const mongoURI = process.env.MONGO_URI; 
 
-mongoose.connect(mongoURI)
-    .then(() => console.log("☕ Database Connected Successfully"))
-    .catch(err => console.log("❌ DB Error:", err));
+if (!mongoURI || mongoURI === "undefined") {
+    console.error("❌ ERROR: MONGO_URI is not defined in Render Environment Variables!");
+} else {
+    mongoose.connect(mongoURI)
+        .then(() => console.log("☕ Database Connected Successfully"))
+        .catch(err => console.log("❌ DB Connection Error:", err));
+}
 
-// MODELS - Nothing removed
+// Models
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -31,7 +36,7 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// API ROUTES
+// API Routes
 app.get('/api/messages', async (req, res) => {
     const messages = await Message.find().sort({ timestamp: 1 });
     res.json(messages);
@@ -41,12 +46,10 @@ app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
     
-    // VIP PROTECTION: Block and signal the frontend to kick
     if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
-        return res.status(402).json({ error: "VIP Required" });
+        return res.status(402).json({ error: "Payment Required" });
     }
 
-    // ORIGINAL SECURITY: Strip HTML
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
 
     const msg = new Message({
@@ -54,7 +57,7 @@ app.post('/api/messages', async (req, res) => {
         text: cleanText,
         avatar: user.avatar,
         isAdmin: user.isAdmin,
-        isVIP: user.isVIP      
+        isVIP: user.isVIP
     });
     await msg.save();
     res.json(msg);
@@ -99,4 +102,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server Live`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
