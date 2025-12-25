@@ -8,16 +8,16 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Tell the server to look for files in the current directory
+// STATIC FILE SERVING - This ensures Render finds your images/CSS
 app.use(express.static(__dirname));
 
 const mongoURI = process.env.MONGO_URI; 
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("☕ Database Connected"))
+    .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// Models
+// MODELS (Includes your VIP and Admin schemas)
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -33,7 +33,8 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// API Routes
+// --- BACKEND COMMANDS / API ---
+
 app.get('/api/messages', async (req, res) => {
     const messages = await Message.find().sort({ timestamp: 1 });
     res.json(messages);
@@ -42,10 +43,32 @@ app.get('/api/messages', async (req, res) => {
 app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
+    
+    // YOUR SECURITY: Strip out HTML/Scripts to prevent hacking
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
-    const msg = new Message({ ...req.body, text: cleanText, avatar: user.avatar, isAdmin: user.isAdmin, isVIP: user.isVIP });
+
+    const msg = new Message({
+        ...req.body,
+        text: cleanText,
+        avatar: user.avatar,
+        isAdmin: user.isAdmin,
+        isVIP: user.isVIP      
+    });
     await msg.save();
     res.json(msg);
+});
+
+app.delete('/api/messages/:id', async (req, res) => {
+    try {
+        const adminEmail = req.query.adminEmail;
+        const user = await User.findOne({ email: adminEmail });
+        if (user && user.isAdmin) {
+            await Message.findByIdAndDelete(req.params.id);
+            res.json({ success: true });
+        } else {
+            res.status(403).json({ error: "Unauthorized" });
+        }
+    } catch (err) { res.status(500).json(err); }
 });
 
 app.get('/api/user-status', async (req, res) => {
@@ -59,7 +82,7 @@ app.post('/api/register', async (req, res) => {
         const user = new User({ ...req.body, isAdmin: count === 0, isVIP: false });
         await user.save();
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: "Fail" }); }
+    } catch (err) { res.status(500).json({ error: "Registration failed" }); }
 });
 
 app.post('/api/login', async (req, res) => {
@@ -67,20 +90,14 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// THE FIX: This manually checks where index.html is hiding
+// CRITICAL FIX FOR RENDER: The "Cannot GET /" solution
 app.get('*', (req, res) => {
-    const pathsToTry = [
-        path.join(__dirname, 'index.html'),
-        path.join(__dirname, 'public', 'index.html'),
-        path.join(process.cwd(), 'index.html')
-    ];
-
-    for (const p of pathsToTry) {
-        if (fs.existsSync(p)) {
-            return res.sendFile(p);
-        }
+    const indexPath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send("Server Error: index.html not found in " + __dirname);
     }
-    res.status(404).send("Error: index.html not found in " + __dirname);
 });
 
 const PORT = process.env.PORT || 3000;
