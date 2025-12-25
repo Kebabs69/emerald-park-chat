@@ -3,17 +3,15 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer'); // NEW: Added for file uploads
+const multer = require('multer');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// NEW: Create uploads folder if it doesn't exist
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// NEW: Configure storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -21,7 +19,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.use(express.static(path.join(__dirname)));
-app.use('/uploads', express.static(uploadDir)); // NEW: Serve the uploads folder
+app.use('/uploads', express.static(uploadDir));
 
 const mongoURI = process.env.MONGO_URI; 
 
@@ -41,6 +39,7 @@ const UserSchema = new mongoose.Schema({
     avatar: { type: String, default: '👤' },
     bio: { type: String, default: "Living life at Emerald Park!" },
     status: { type: String, default: "Online" },
+    lastSeen: { type: Date, default: Date.now }, // ADDED: For Online List
     joinDate: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', UserSchema);
@@ -68,13 +67,22 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// NEW: File Upload Route
+// --- API ROUTES ---
+
+// ADDED: Get users active in the last 5 minutes
+app.get('/api/online-users', async (req, res) => {
+    try {
+        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const onlineUsers = await User.find({ lastSeen: { $gte: fiveMinsAgo } }).select('username avatar');
+        res.json(onlineUsers);
+    } catch (err) { res.status(500).json([]); }
+});
+
 app.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded.');
     res.json({ url: `/uploads/${req.file.filename}` });
 });
 
-// --- MODERATION API ---
 app.post('/api/admin/action', async (req, res) => {
     try {
         const admin = await User.findOne({ email: req.body.adminEmail });
@@ -89,7 +97,6 @@ app.post('/api/admin/action', async (req, res) => {
     } catch (err) { res.status(500).json("Action failed"); }
 });
 
-// --- API ROUTES ---
 app.get('/api/messages', async (req, res) => {
     try {
         const { room, userEmail } = req.query;
@@ -158,8 +165,10 @@ app.delete('/api/messages/:id', async (req, res) => {
 
 app.post('/api/update-profile', async (req, res) => {
     try {
-        const { email, bio, status, avatar } = req.body;
-        const updatedUser = await User.findOneAndUpdate({ email }, { bio, status, avatar }, { new: true });
+        const { email, bio, status, avatar, lastSeen } = req.body;
+        const updateData = { bio, status, avatar };
+        if (lastSeen) updateData.lastSeen = lastSeen; // Update activity timestamp
+        const updatedUser = await User.findOneAndUpdate({ email }, updateData, { new: true });
         res.json(updatedUser);
     } catch (err) { res.status(500).json("Profile update failed"); }
 });
