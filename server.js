@@ -19,6 +19,7 @@ const User = mongoose.model('User', new mongoose.Schema({
     email: { type: String, unique: true, required: true }, 
     password: String, 
     isAdmin: Boolean,
+    isVIP: { type: Boolean, default: false }, 
     avatar: { type: String, default: '👤' } 
 }));
 
@@ -29,10 +30,10 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     room: String, 
     avatar: String, 
     isAdmin: Boolean,
+    isVIP: Boolean,
     timestamp: { type: Date, default: Date.now }
 }));
 
-// Secure Delete Route
 app.delete('/api/messages/:id', async (req, res) => {
     try {
         const adminEmail = req.query.adminEmail;
@@ -54,10 +55,16 @@ app.get('/api/messages', async (req, res) => {
 app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
+    
+    // Security: Remove any HTML tags from the message
+    let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
+
     const msg = new Message({
         ...req.body,
+        text: cleanText,
         avatar: user.avatar,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        isVIP: user.isVIP
     });
     await msg.save();
     res.json(msg);
@@ -65,7 +72,10 @@ app.post('/api/messages', async (req, res) => {
 
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
-    res.json({ isAdmin: user ? user.isAdmin : false });
+    res.json({ 
+        isAdmin: user ? user.isAdmin : false,
+        isVIP: user ? user.isVIP : false 
+    });
 });
 
 app.post('/api/register', async (req, res) => {
@@ -73,7 +83,7 @@ app.post('/api/register', async (req, res) => {
         const { email, username, password, avatar } = req.body;
         const count = await User.countDocuments();
         const user = new User({
-            username, email, password, avatar: avatar || '👤', isAdmin: count === 0
+            username, email, password, avatar: avatar || '👤', isAdmin: count === 0, isVIP: false
         });
         await user.save();
         res.json({ success: true });
