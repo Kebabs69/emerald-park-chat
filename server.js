@@ -7,7 +7,9 @@ const fs = require('fs');
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(express.static(__dirname));
+
+// FORCE root directory for static files
+app.use(express.static(path.join(__dirname)));
 
 const mongoURI = process.env.MONGO_URI; 
 
@@ -15,7 +17,7 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// MODELS - Restored with all original fields
+// MODELS - All original fields restored
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -40,38 +42,25 @@ app.get('/api/messages', async (req, res) => {
 app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
-    
-    // VIP Room Protection
     if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
         return res.status(402).json({ error: "VIP Required" });
     }
-
-    // Security: Strip HTML Tags
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
-
-    const msg = new Message({
-        ...req.body,
-        text: cleanText,
-        avatar: user.avatar,
-        isAdmin: user.isAdmin,
-        isVIP: user.isVIP
-    });
+    const msg = new Message({ ...req.body, text: cleanText, avatar: user.avatar, isAdmin: user.isAdmin, isVIP: user.isVIP });
     await msg.save();
     res.json(msg);
 });
 
-// Admin Delete Feature
+// Admin Delete Route
 app.delete('/api/messages/:id', async (req, res) => {
-    try {
-        const adminEmail = req.query.adminEmail;
-        const user = await User.findOne({ email: adminEmail });
-        if (user && user.isAdmin) {
-            await Message.findByIdAndDelete(req.params.id);
-            res.json({ success: true });
-        } else {
-            res.status(403).json({ error: "Unauthorized" });
-        }
-    } catch (err) { res.status(500).json(err); }
+    const adminEmail = req.query.adminEmail;
+    const user = await User.findOne({ email: adminEmail });
+    if (user && user.isAdmin) {
+        await Message.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } else {
+        res.status(403).json({ error: "Unauthorized" });
+    }
 });
 
 app.get('/api/user-status', async (req, res) => {
@@ -79,7 +68,6 @@ app.get('/api/user-status', async (req, res) => {
     res.json({ isAdmin: user ? user.isAdmin : false, isVIP: user ? user.isVIP : false });
 });
 
-// Admin Registration Logic: First user to register becomes Admin
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
@@ -94,12 +82,10 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// Render Path Fix
+// CRITICAL PATH FIX
 app.get('*', (req, res) => {
-    const loc = path.join(__dirname, 'index.html');
-    if (fs.existsSync(loc)) return res.sendFile(loc);
-    res.status(404).send("index.html missing");
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
