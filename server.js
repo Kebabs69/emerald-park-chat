@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Static file serving for images/CSS
+// STATIC FILE SERVING
 app.use(express.static(__dirname));
 
 const mongoURI = process.env.MONGO_URI; 
@@ -17,7 +17,7 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// Keep your Models exactly as they are
+// MODELS (Maintained your specific schema)
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -33,7 +33,7 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// API Routes
+// API ROUTES
 app.get('/api/messages', async (req, res) => {
     const messages = await Message.find().sort({ timestamp: 1 });
     res.json(messages);
@@ -43,7 +43,11 @@ app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
     
-    // SECURITY: Keep your HTML stripping logic
+    // VIP LOUNGE PAYWALL: Blocks non-VIP/non-Admin from posting
+    if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) {
+        return res.status(402).json({ error: "VIP Access Required" });
+    }
+
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
 
     const msg = new Message({
@@ -89,17 +93,11 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// ULTIMATE FIX: Search multiple locations for index.html
+// PATH FIX FOR RENDER
 app.get('*', (req, res) => {
-    const locations = [
-        path.join(__dirname, 'index.html'),
-        path.join(__dirname, 'public', 'index.html'),
-        '/opt/render/project/src/index.html'
-    ];
-    for (let loc of locations) {
-        if (fs.existsSync(loc)) return res.sendFile(loc);
-    }
-    res.status(404).send("File Not Found. Please check folder structure.");
+    const loc = path.join(__dirname, 'index.html');
+    if (fs.existsSync(loc)) return res.sendFile(loc);
+    res.status(404).send("index.html missing");
 });
 
 const PORT = process.env.PORT || 3000;
