@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// STATIC FILE SERVING - This ensures Render finds your images/CSS
+// Static file serving for images/CSS
 app.use(express.static(__dirname));
 
 const mongoURI = process.env.MONGO_URI; 
@@ -17,7 +17,7 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// MODELS (Includes your VIP and Admin schemas)
+// Keep your Models exactly as they are
 const User = mongoose.model('User', new mongoose.Schema({
     username: String, 
     email: { type: String, unique: true, required: true }, 
@@ -33,8 +33,7 @@ const Message = mongoose.model('Message', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// --- BACKEND COMMANDS / API ---
-
+// API Routes
 app.get('/api/messages', async (req, res) => {
     const messages = await Message.find().sort({ timestamp: 1 });
     res.json(messages);
@@ -44,7 +43,7 @@ app.post('/api/messages', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(403).json("User not found");
     
-    // YOUR SECURITY: Strip out HTML/Scripts to prevent hacking
+    // SECURITY: Keep your HTML stripping logic
     let cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
 
     const msg = new Message({
@@ -90,14 +89,17 @@ app.post('/api/login', async (req, res) => {
     user ? res.json(user) : res.status(401).json("Fail");
 });
 
-// CRITICAL FIX FOR RENDER: The "Cannot GET /" solution
+// ULTIMATE FIX: Search multiple locations for index.html
 app.get('*', (req, res) => {
-    const indexPath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send("Server Error: index.html not found in " + __dirname);
+    const locations = [
+        path.join(__dirname, 'index.html'),
+        path.join(__dirname, 'public', 'index.html'),
+        '/opt/render/project/src/index.html'
+    ];
+    for (let loc of locations) {
+        if (fs.existsSync(loc)) return res.sendFile(loc);
     }
+    res.status(404).send("File Not Found. Please check folder structure.");
 });
 
 const PORT = process.env.PORT || 3000;
