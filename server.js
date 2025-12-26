@@ -194,6 +194,15 @@ app.post('/api/login', async (req, res) => {
         if (user) { res.json(user); } else { res.status(401).json("Invalid credentials"); }
     } catch (err) { res.status(500).json("Login error"); }
 });
+// --- ADD THIS NEW ROUTE ---
+app.get('/api/profile/:email', async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.params.email })
+                               .select('username avatar bio status joinDate isAdmin isVIP');
+        if (!user) return res.status(404).json("User not found");
+        res.json(user);
+    } catch (err) { res.status(500).json("Error fetching profile"); }
+});
 
 app.get('*', (req, res) => {
     const possiblePaths = [path.join(__dirname, 'index.html'), path.join(__dirname, 'public', 'index.html'), path.join(process.cwd(), 'index.html')];
