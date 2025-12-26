@@ -27,7 +27,6 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// --- MODELS ---
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true }, 
     email: { type: String, unique: true, required: true }, 
@@ -37,9 +36,9 @@ const UserSchema = new mongoose.Schema({
     isMuted: { type: Boolean, default: false }, 
     isBanned: { type: Boolean, default: false },
     avatar: { type: String, default: '👤' },
-    bio: { type: String, default: "Living life at Emerald Park!" },
+    bio: { type: String, default: "Networking on Civility Chat!" }, // UPDATED BIO
     status: { type: String, default: "Online" },
-    lastSeen: { type: Date, default: Date.now }, // ADDED: For Online List
+    lastSeen: { type: Date, default: Date.now }, 
     joinDate: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', UserSchema);
