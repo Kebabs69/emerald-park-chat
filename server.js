@@ -27,6 +27,7 @@ mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
+// --- MODELS ---
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true }, 
     email: { type: String, unique: true, required: true }, 
@@ -36,9 +37,9 @@ const UserSchema = new mongoose.Schema({
     isMuted: { type: Boolean, default: false }, 
     isBanned: { type: Boolean, default: false },
     avatar: { type: String, default: '👤' },
-    bio: { type: String, default: "Networking on Civility Chat!" },
+    bio: { type: String, default: "Living life at Emerald Park!" },
     status: { type: String, default: "Online" },
-    lastSeen: { type: Date, default: Date.now }, 
+    lastSeen: { type: Date, default: Date.now }, // ADDED: For Online List
     joinDate: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', UserSchema);
@@ -58,9 +59,17 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
+const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
+    email: String,
+    username: String,
+    tier: String,
+    status: { type: String, default: 'Pending' },
+    timestamp: { type: Date, default: Date.now }
+}));
+
 // --- API ROUTES ---
 
-// 1. ADDED: This is needed to get the online users
+// ADDED: Get users active in the last 5 minutes
 app.get('/api/online-users', async (req, res) => {
     try {
         const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -69,60 +78,99 @@ app.get('/api/online-users', async (req, res) => {
     } catch (err) { res.status(500).json([]); }
 });
 
-app.get('/api/messages', async (req, res) => {
-    try {
-        const { room, userEmail } = req.query;
-        if (userEmail) {
-            await User.findOneAndUpdate({ email: userEmail }, { lastSeen: Date.now() });
-        }
-        let query = {};
-        if (room === 'DM') {
-            query = { room: 'DM', $or: [{ email: userEmail }, { recipientEmail: userEmail }] };
-        } else if (room) {
-            query.room = room;
-        }
-        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(50);
-        res.json(messages);
-    } catch (err) { res.status(500).json([]); }
-});
-
-// 2. ADDED: The missing Delete route for Admins
-app.delete('/api/messages/:id', async (req, res) => {
-    try {
-        const adminUser = await User.findOne({ email: req.query.adminEmail });
-        if (adminUser && adminUser.isAdmin) {
-            await Message.findByIdAndDelete(req.params.id);
-            res.json({ success: true });
-        } else {
-            res.status(403).json("Unauthorized");
-        }
-    } catch (err) { res.status(500).json("Delete failed"); }
-});
-
-app.post('/api/messages', async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user || user.isBanned) return res.status(403).json("Access Denied");
-        const msg = new Message({ ...req.body, isAdmin: user.isAdmin, isVIP: user.isVIP });
-        await msg.save();
-        res.json(msg);
-    } catch (err) { res.status(500).json("Error"); }
-});
-
 app.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded.');
     res.json({ url: `/uploads/${req.file.filename}` });
 });
 
 app.post('/api/admin/action', async (req, res) => {
-    const { adminEmail, targetEmail, action } = req.body;
-    const admin = await User.findOne({ email: adminEmail });
-    if (!admin || !admin.isAdmin) return res.status(403).json("Access Denied");
-    
-    if (action === 'ban') await User.findOneAndUpdate({ email: targetEmail }, { isBanned: true });
-    if (action === 'unban') await User.findOneAndUpdate({ email: targetEmail }, { isBanned: false });
-    if (action === 'vip') await User.findOneAndUpdate({ email: targetEmail }, { isVIP: true });
-    res.json({ success: true });
+    try {
+        const admin = await User.findOne({ email: req.body.adminEmail });
+        if (!admin || !admin.isAdmin) return res.status(403).json("Unauthorized");
+        let update = {};
+        if (req.body.action === 'ban') update = { isBanned: true };
+        if (req.body.action === 'mute') update = { isMuted: true };
+        if (req.body.action === 'unmute') update = { isMuted: false };
+        if (req.body.action === 'makeVIP') update = { isVIP: true };
+        await User.findOneAndUpdate({ email: req.body.targetEmail }, update);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json("Action failed"); }
+});
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        const { room, userEmail } = req.query;
+        let query = {};
+        if (room === 'DM') {
+            query = { room: 'DM', $or: [{ email: userEmail }, { recipientEmail: userEmail }] };
+        } else if (room) {
+            query.room = room;
+        }
+        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
+        res.json(messages);
+    } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
+});
+
+app.post('/api/messages', async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.body.email });
+        if (!user || user.isBanned) return res.status(403).json("User banned");
+        if (user.isMuted) return res.status(403).json("User muted");
+        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) return res.status(402).json({ error: "VIP Membership Required" });
+
+        let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
+        const msg = new Message({
+            username: user.username,
+            email: user.email,
+            text: cleanText,
+            room: req.body.room,
+            avatar: user.avatar,
+            isAdmin: user.isAdmin,
+            isVIP: user.isVIP,
+            imageUrl: req.body.imageUrl || null,
+            recipientEmail: req.body.recipientEmail || null,
+            isAnnouncement: (user.isAdmin && req.body.isAnnouncement)
+        });
+        await msg.save();
+        res.json(msg);
+    } catch (err) { res.status(500).json({ error: "Server failed to save message" }); }
+});
+
+app.post('/api/support', async (req, res) => {
+    try {
+        const request = new SupportRequest(req.body);
+        await request.save();
+        const msg = new Message({ 
+            username: "SYSTEM", 
+            text: `📢 UPGRADE REQUEST: ${req.body.username} has requested ${req.body.tier}.`, 
+            room: "General", 
+            avatar: "🎁", 
+            isAdmin: true 
+        });
+        await msg.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: "Support request failed" }); }
+});
+
+app.delete('/api/messages/:id', async (req, res) => {
+    try {
+        const adminEmail = req.query.adminEmail;
+        const user = await User.findOne({ email: adminEmail });
+        if (user && user.isAdmin) {
+            await Message.findByIdAndDelete(req.params.id);
+            res.json({ success: true });
+        } else { res.status(403).json("Unauthorized"); }
+    } catch (err) { res.status(500).json("Purge failed"); }
+});
+
+app.post('/api/update-profile', async (req, res) => {
+    try {
+        const { email, bio, status, avatar, lastSeen } = req.body;
+        const updateData = { bio, status, avatar };
+        if (lastSeen) updateData.lastSeen = lastSeen; // Update activity timestamp
+        const updatedUser = await User.findOneAndUpdate({ email }, updateData, { new: true });
+        res.json(updatedUser);
+    } catch (err) { res.status(500).json("Profile update failed"); }
 });
 
 app.get('/api/user-status', async (req, res) => {
@@ -148,7 +196,12 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('*', (req, res) => {
+    const possiblePaths = [path.join(__dirname, 'index.html'), path.join(__dirname, 'public', 'index.html'), path.join(process.cwd(), 'index.html')];
+    let found = false;
+    for (let p of possiblePaths) { if (fs.existsSync(p)) { res.sendFile(p); found = true; break; } }
+    if (!found) res.status(404).send(`<h1>404: Website Files Missing</h1>`);
+});
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON: ${PORT}`));
