@@ -107,27 +107,19 @@ app.get('/api/messages', async (req, res) => {
         if (room === 'DM') {
             query = { room: 'DM', $or: [{ email: userEmail }, { recipientEmail: userEmail }] };
         } else if (room) {
-            query.room = room;
-        }
-        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-        res.json(messages);
-    } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
-});
-
-app.post('/api/messages', async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user || user.isBanned) return res.status(403).json("User banned");
-        if (user.isMuted) return res.status(403).json("User muted");
-        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) return res.status(402).json({ error: "VIP Membership Required" });
-
-        let cleanText = req.body.text ? req.body.text.replace(/<[^>]*>?/gm, '').trim() : "";
+        // Inside app.post('/api/messages')
         const msg = new Message({
             username: user.username,
             email: user.email,
-            text: cleanText,
+            text: req.body.text || "", // Ensures text doesn't break if sending only a photo
             room: req.body.room,
             avatar: user.avatar,
+            isAdmin: user.isAdmin,
+            isVIP: user.isVIP,
+            imageUrl: req.body.imageUrl || null, // Ensures the photo URL is saved
+            recipientEmail: req.body.recipientEmail || null
+        });
+        await msg.save();
             isAdmin: user.isAdmin,
             isVIP: user.isVIP,
             imageUrl: req.body.imageUrl || null,
