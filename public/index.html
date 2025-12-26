@@ -139,8 +139,14 @@
                     <input type="file" id="msg-file" style="display:none;" onchange="uploadAndSend()">
                     <button onclick="document.getElementById('msg-file').click()" style="background:none; border:none; font-size:24px; cursor:pointer;">📷</button>
                     <input type="text" id="msg-input" placeholder="Write a message..." style="flex:1; margin:0; border-radius:25px; padding-left:20px;">
-                    <button onclick="sendMsg()" class="btn-p" style="width:80px; border-radius:25px;">SEND</button>
+                   <button onclick="sendMessage()" class="btn-p" style="width:80px; border-radius:25px;">SEND</button>
                 </div>
+                // This makes the Enter key work
+document.getElementById('msg-input').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
             </div>
 
             <div id="profile-sidebar">
