@@ -177,35 +177,35 @@
             login.style.display = login.style.display === 'none' ? 'block' : 'none';
             reg.style.display = reg.style.display === 'none' ? 'block' : 'none';
         }
-async function loadMessages(forceClear = false) {
-            const res = await fetch(`/api/messages?room=${currentRoom}&userEmail=${userEmail}`);
-            const messages = await res.json();
-            const box = document.getElementById('chat-box');
-            if (forceClear) box.innerHTML = '';
-            
-            messages.forEach(m => {
-                if (!document.getElementById(`msg-${m._id}`)) {
-                    const div = document.createElement('div');
-                    div.id = `msg-${m._id}`;
-                    div.className = 'message';
-                    div.style.alignSelf = m.email === userEmail ? 'flex-end' : 'flex-start';
-                    if(m.email === userEmail) div.style.background = '#e1f5fe';
-                    
-                    // FIXED: This part ensures the image URL is turned into a visible picture
-                    const imgHtml = m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:100%; border-radius:10px; margin-top:10px; display:block;">` : '';
-                    
-                    div.innerHTML = `
-                        <div class="msg-header">
-                            <strong onclick="openProfile('${m.email}')" style="cursor:pointer; text-decoration:underline;">${m.username}</strong> 
-                            ${m.isAdmin ? '<span style="color:red; font-size:9px">[ADMIN]</span>' : ''}
-                        </div>
-                        <div style="font-size:14px;">${m.text || ""}</div>
-                        ${imgHtml}
-                    `;
-                    box.appendChild(div);
-                    box.scrollTop = box.scrollHeight;
-                }
+
+        function enterChat() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
+            checkStatus();
+        }
+
+        async function handleLogin() {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: document.getElementById('l-email').value, password: document.getElementById('l-pass').value })
             });
+            if(res.ok) {
+                const data = await res.json();
+                localStorage.setItem('userEmail', data.email);
+                localStorage.setItem('username', data.username);
+                location.reload();
+            } else alert("Invalid credentials");
+        }
+
+        async function handleRegister() {
+            await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: document.getElementById('r-user').value, email: document.getElementById('r-email').value, password: document.getElementById('r-pass').value })
+            });
+            alert("Account created! Please log in.");
+            toggleAuth();
         }
 
         async function checkStatus() {
