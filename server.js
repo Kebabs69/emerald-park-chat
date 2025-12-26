@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// --- FILE UPLOAD CONFIG ---
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
@@ -18,11 +19,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// --- STATIC ASSETS ---
 app.use(express.static(path.join(__dirname)));
 app.use('/uploads', express.static(uploadDir));
 
+// --- DATABASE CONNECTION ---
 const mongoURI = process.env.MONGO_URI; 
-
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
@@ -69,6 +71,7 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
 
 // --- API ROUTES ---
 
+// Online users active in the last 5 minutes
 app.get('/api/online-users', async (req, res) => {
     try {
         const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -116,11 +119,13 @@ app.post('/api/messages', async (req, res) => {
         if (!user || user.isBanned) return res.status(403).json("User banned");
         if (user.isMuted) return res.status(403).json("User muted");
         
+        // VIP Check
         if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) 
             return res.status(402).json({ error: "VIP Membership Required" });
 
+        // Sanitization
         let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
-        
+
         const msg = new Message({
             username: user.username,
             email: user.email,
@@ -200,17 +205,22 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
-// ROBUST PATH CHECK FOR RENDER
+// --- RENDER COMPATIBLE PATH RESOLVER ---
 app.get('*', (req, res) => {
     const possiblePaths = [
-        path.join(__dirname, 'index.html'),
-        path.join(__dirname, 'public', 'index.html'),
+        path.join(__dirname, 'index.html'), 
+        path.join(__dirname, 'public', 'index.html'), 
         path.resolve(process.cwd(), 'index.html')
     ];
+    let found = false;
     for (let p of possiblePaths) {
-        if (fs.existsSync(p)) return res.sendFile(p);
+        if (fs.existsSync(p)) {
+            res.sendFile(p);
+            found = true;
+            break;
+        }
     }
-    res.status(404).send("404: index.html not found in project root.");
+    if (!found) res.status(404).send("404: Website Files Missing");
 });
 
 const PORT = process.env.PORT || 10000;
