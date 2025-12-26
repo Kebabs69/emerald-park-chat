@@ -9,7 +9,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// --- FILE UPLOAD CONFIG ---
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
@@ -19,17 +18,15 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// --- STATIC ASSETS ---
 app.use(express.static(path.join(__dirname)));
 app.use('/uploads', express.static(uploadDir));
 
-// --- DATABASE CONNECTION ---
 const mongoURI = process.env.MONGO_URI; 
+
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
-// --- MODELS ---
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true }, 
     email: { type: String, unique: true, required: true }, 
@@ -39,7 +36,7 @@ const UserSchema = new mongoose.Schema({
     isMuted: { type: Boolean, default: false }, 
     isBanned: { type: Boolean, default: false },
     avatar: { type: String, default: '👤' },
-    bio: { type: String, default: "Living life at Emerald Park!" },
+    bio: { type: String, default: "Networking on Civility Chat!" }, // UPDATED BIO
     status: { type: String, default: "Online" },
     lastSeen: { type: Date, default: Date.now }, 
     joinDate: { type: Date, default: Date.now }
@@ -71,7 +68,7 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
 
 // --- API ROUTES ---
 
-// Online users active in the last 5 minutes
+// ADDED: Get users active in the last 5 minutes
 app.get('/api/online-users', async (req, res) => {
     try {
         const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -118,14 +115,9 @@ app.post('/api/messages', async (req, res) => {
         const user = await User.findOne({ email: req.body.email });
         if (!user || user.isBanned) return res.status(403).json("User banned");
         if (user.isMuted) return res.status(403).json("User muted");
-        
-        // VIP Check
-        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) 
-            return res.status(402).json({ error: "VIP Membership Required" });
+        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) return res.status(402).json({ error: "VIP Membership Required" });
 
-        // Sanitization
         let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
-
         const msg = new Message({
             username: user.username,
             email: user.email,
@@ -147,12 +139,12 @@ app.post('/api/support', async (req, res) => {
     try {
         const request = new SupportRequest(req.body);
         await request.save();
-        const msg = new Message({
-            username: "SYSTEM",
-            text: `📢 UPGRADE REQUEST: ${req.body.username} has requested ${req.body.tier}.`,
-            room: "General",
-            avatar: "🎁",
-            isAdmin: true
+        const msg = new Message({ 
+            username: "SYSTEM", 
+            text: `📢 UPGRADE REQUEST: ${req.body.username} has requested ${req.body.tier}.`, 
+            room: "General", 
+            avatar: "🎁", 
+            isAdmin: true 
         });
         await msg.save();
         res.json({ success: true });
@@ -166,9 +158,7 @@ app.delete('/api/messages/:id', async (req, res) => {
         if (user && user.isAdmin) {
             await Message.findByIdAndDelete(req.params.id);
             res.json({ success: true });
-        } else {
-            res.status(403).json("Unauthorized");
-        }
+        } else { res.status(403).json("Unauthorized"); }
     } catch (err) { res.status(500).json("Purge failed"); }
 });
 
@@ -176,7 +166,7 @@ app.post('/api/update-profile', async (req, res) => {
     try {
         const { email, bio, status, avatar, lastSeen } = req.body;
         const updateData = { bio, status, avatar };
-        if (lastSeen) updateData.lastSeen = lastSeen; 
+        if (lastSeen) updateData.lastSeen = lastSeen; // Update activity timestamp
         const updatedUser = await User.findOneAndUpdate({ email }, updateData, { new: true });
         res.json(updatedUser);
     } catch (err) { res.status(500).json("Profile update failed"); }
@@ -205,22 +195,11 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
-// --- RENDER COMPATIBLE PATH RESOLVER ---
 app.get('*', (req, res) => {
-    const possiblePaths = [
-        path.join(__dirname, 'index.html'), 
-        path.join(__dirname, 'public', 'index.html'), 
-        path.resolve(process.cwd(), 'index.html')
-    ];
+    const possiblePaths = [path.join(__dirname, 'index.html'), path.join(__dirname, 'public', 'index.html'), path.join(process.cwd(), 'index.html')];
     let found = false;
-    for (let p of possiblePaths) {
-        if (fs.existsSync(p)) {
-            res.sendFile(p);
-            found = true;
-            break;
-        }
-    }
-    if (!found) res.status(404).send("404: Website Files Missing");
+    for (let p of possiblePaths) { if (fs.existsSync(p)) { res.sendFile(p); found = true; break; } }
+    if (!found) res.status(404).send(`<h1>404: Website Files Missing</h1>`);
 });
 
 const PORT = process.env.PORT || 10000;

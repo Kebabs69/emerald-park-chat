@@ -1,207 +1,319 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
-
-const app = express();
-app.use(express.json());
-app.use(cors());
-
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
-
-app.use(express.static(path.join(__dirname)));
-app.use('/uploads', express.static(uploadDir));
-
-const mongoURI = process.env.MONGO_URI; 
-
-mongoose.connect(mongoURI)
-    .then(() => console.log("☕ Database Connected Successfully"))
-    .catch(err => console.log("❌ DB Error:", err));
-
-// --- MODELS ---
-const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true }, 
-    email: { type: String, unique: true, required: true }, 
-    password: { type: String, required: true }, 
-    isAdmin: { type: Boolean, default: false },
-    isVIP: { type: Boolean, default: false }, 
-    isMuted: { type: Boolean, default: false }, 
-    isBanned: { type: Boolean, default: false },
-    avatar: { type: String, default: '👤' },
-    bio: { type: String, default: "Living life at Emerald Park!" },
-    status: { type: String, default: "Online" },
-    lastSeen: { type: Date, default: Date.now }, // ADDED: For Online List
-    joinDate: { type: Date, default: Date.now }
-});
-const User = mongoose.model('User', UserSchema);
-
-const MessageSchema = new mongoose.Schema({
-    username: String, 
-    email: String, 
-    text: String, 
-    room: String, 
-    avatar: String, 
-    isAdmin: { type: Boolean, default: false }, 
-    isVIP: { type: Boolean, default: false },
-    imageUrl: { type: String, default: null }, 
-    recipientEmail: { type: String, default: null }, 
-    isAnnouncement: { type: Boolean, default: false },
-    timestamp: { type: Date, default: Date.now }
-});
-const Message = mongoose.model('Message', MessageSchema);
-
-const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
-    email: String,
-    username: String,
-    tier: String,
-    status: { type: String, default: 'Pending' },
-    timestamp: { type: Date, default: Date.now }
-}));
-
-// --- API ROUTES ---
-
-// ADDED: Get users active in the last 5 minutes
-app.get('/api/online-users', async (req, res) => {
-    try {
-        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
-        const onlineUsers = await User.find({ lastSeen: { $gte: fiveMinsAgo } }).select('username avatar');
-        res.json(onlineUsers);
-    } catch (err) { res.status(500).json([]); }
-});
-
-app.post('/api/upload', upload.single('file'), (req, res) => {
-    if (!req.file) return res.status(400).send('No file uploaded.');
-    res.json({ url: `/uploads/${req.file.filename}` });
-});
-
-app.post('/api/admin/action', async (req, res) => {
-    try {
-        const admin = await User.findOne({ email: req.body.adminEmail });
-        if (!admin || !admin.isAdmin) return res.status(403).json("Unauthorized");
-        let update = {};
-        if (req.body.action === 'ban') update = { isBanned: true };
-        if (req.body.action === 'mute') update = { isMuted: true };
-        if (req.body.action === 'unmute') update = { isMuted: false };
-        if (req.body.action === 'makeVIP') update = { isVIP: true };
-        await User.findOneAndUpdate({ email: req.body.targetEmail }, update);
-        res.json({ success: true });
-    } catch (err) { res.status(500).json("Action failed"); }
-});
-
-app.get('/api/messages', async (req, res) => {
-    try {
-        const { room, userEmail } = req.query;
-        let query = {};
-        if (room === 'DM') {
-            query = { room: 'DM', $or: [{ email: userEmail }, { recipientEmail: userEmail }] };
-        } else if (room) {
-            query.room = room;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Civility Chat | Elite Networking</title>
+    <style>
+        :root { 
+            --p-green: #1B3022; 
+            --a-gold: #D4AF37; 
+            --bg: #f8f9fa; 
+            --white: #ffffff;
+            --admin-red: #e74c3c; 
+            --vip-blue: #3498db; 
+            --coffee-orange: #FFDD00; 
+            --glass: rgba(255, 255, 255, 0.95);
         }
-        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-        res.json(messages);
-    } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
-});
+        
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #333; }
 
-app.post('/api/messages', async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user || user.isBanned) return res.status(403).json("User banned");
-        if (user.isMuted) return res.status(403).json("User muted");
-        if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) return res.status(402).json({ error: "VIP Membership Required" });
+        /* PROFESSIONAL AUTH SCREEN */
+        #auth-screen { 
+            background: linear-gradient(135deg, var(--p-green) 0%, #2c4a35 100%);
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card { 
+            background: var(--glass); padding: 40px; border-radius: 24px; width: 360px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); text-align: center; border: 1px solid rgba(255,255,255,0.2);
+        }
+        .auth-logo-img { width: 120px; height: auto; margin-bottom: 20px; }
+        .auth-card h2 { color: var(--p-green); margin-bottom: 5px; font-weight: 800; }
+        .auth-card p { color: #666; font-size: 14px; margin-bottom: 25px; }
 
-        let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
-        const msg = new Message({
-            username: user.username,
-            email: user.email,
-            text: cleanText,
-            room: req.body.room,
-            avatar: user.avatar,
-            isAdmin: user.isAdmin,
-            isVIP: user.isVIP,
-            imageUrl: req.body.imageUrl || null,
-            recipientEmail: req.body.recipientEmail || null,
-            isAnnouncement: (user.isAdmin && req.body.isAnnouncement)
-        });
-        await msg.save();
-        res.json(msg);
-    } catch (err) { res.status(500).json({ error: "Server failed to save message" }); }
-});
+        /* TOP NAVIGATION BAR */
+        .top-nav {
+            background: var(--p-green); color: white; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid var(--a-gold); z-index: 100;
+        }
+        .user-status-strip { display: flex; align-items: center; gap: 15px; }
+        .mini-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--a-gold); object-fit: cover; background: #eee; }
 
-app.post('/api/support', async (req, res) => {
-    try {
-        const request = new SupportRequest(req.body);
-        await request.save();
-        const msg = new Message({ 
-            username: "SYSTEM", 
-            text: `📢 UPGRADE REQUEST: ${req.body.username} has requested ${req.body.tier}.`, 
-            room: "General", 
-            avatar: "🎁", 
-            isAdmin: true 
-        });
-        await msg.save();
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: "Support request failed" }); }
-});
+        /* ROOMS BAR */
+        .rooms-bar { background: #264230; padding: 12px; display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; }
+        .room-btn { 
+            background: rgba(255,255,255,0.1); border: none; color: white; 
+            padding: 8px 20px; border-radius: 30px; cursor: pointer; transition: 0.3s; white-space: nowrap; font-size: 13px;
+        }
+        .room-btn.active { background: var(--a-gold); color: var(--p-green); font-weight: bold; }
 
-app.delete('/api/messages/:id', async (req, res) => {
-    try {
-        const adminEmail = req.query.adminEmail;
-        const user = await User.findOne({ email: adminEmail });
-        if (user && user.isAdmin) {
-            await Message.findByIdAndDelete(req.params.id);
-            res.json({ success: true });
-        } else { res.status(403).json("Unauthorized"); }
-    } catch (err) { res.status(500).json("Purge failed"); }
-});
+        /* MAIN LAYOUT */
+        #main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        #chat-section { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
 
-app.post('/api/update-profile', async (req, res) => {
-    try {
-        const { email, bio, status, avatar, lastSeen } = req.body;
-        const updateData = { bio, status, avatar };
-        if (lastSeen) updateData.lastSeen = lastSeen; // Update activity timestamp
-        const updatedUser = await User.findOneAndUpdate({ email }, updateData, { new: true });
-        res.json(updatedUser);
-    } catch (err) { res.status(500).json("Profile update failed"); }
-});
+        /* SIDEBAR (ONLY ONLINE LIST & SUPPORT) */
+        #profile-sidebar { 
+            width: 240px; background: var(--white); border-left: 1px solid #eee; 
+            display: flex; flex-direction: column; padding: 20px;
+        }
 
-app.get('/api/user-status', async (req, res) => {
-    const user = await User.findOne({ email: req.query.email });
-    if (!user) return res.status(404).json("User missing");
-    res.json(user);
-});
+        .online-tag { 
+            background: #e8f5e9; color: #2ecc71; padding: 5px 10px; 
+            border-radius: 20px; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 15px;
+        }
 
-app.post('/api/register', async (req, res) => {
-    try {
-        const count = await User.countDocuments();
-        const user = new User({ ...req.body, isAdmin: count === 0, isVIP: count === 0 });
-        await user.save();
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: "Registration failed" }); }
-});
+        .message { 
+            background: white; padding: 14px; border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 80%; position: relative;
+        }
+        .msg-header { font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
 
-app.post('/api/login', async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.body.email, password: req.body.password });
-        if (user && user.isBanned) return res.status(403).json("Account Banned");
-        if (user) { res.json(user); } else { res.status(401).json("Invalid credentials"); }
-    } catch (err) { res.status(500).json("Login error"); }
-});
+        /* BUTTONS & INPUTS */
+        input, textarea { 
+            width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; 
+            border-radius: 12px; box-sizing: border-box; font-size: 14px; transition: 0.3s;
+        }
+        input:focus { border-color: var(--a-gold); outline: none; }
+        .btn-p { 
+            width: 100%; padding: 12px; background: var(--p-green); color: white; border: none; 
+            border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .btn-p:hover { transform: translateY(-2px); opacity: 0.9; }
 
-app.get('*', (req, res) => {
-    const possiblePaths = [path.join(__dirname, 'index.html'), path.join(__dirname, 'public', 'index.html'), path.join(process.cwd(), 'index.html')];
-    let found = false;
-    for (let p of possiblePaths) { if (fs.existsSync(p)) { res.sendFile(p); found = true; break; } }
-    if (!found) res.status(404).send(`<h1>404: Website Files Missing</h1>`);
-});
+        @media (max-width: 900px) {
+            #profile-sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-screen">
+        <div class="auth-card">
+            <img src="public/logo.png" class="auth-logo-img" alt="Civility Chat">
+            <h2>Civility Chat</h2>
+            <p>Experience the Elite Standard</p>
+            
+            <div id="login-form">
+                <input type="email" id="l-email" placeholder="Email Address">
+                <input type="password" id="l-pass" placeholder="Password">
+                <button class="btn-p" onclick="handleLogin()">SIGN IN</button>
+                <p style="margin-top:15px; font-size:12px;">New here? <a href="#" onclick="toggleAuth()" style="color:var(--a-gold)">Create an account</a></p>
+            </div>
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON: ${PORT}`));
+            <div id="register-form" style="display:none;">
+                <input type="text" id="r-user" placeholder="Username">
+                <input type="email" id="r-email" placeholder="Email">
+                <input type="password" id="r-pass" placeholder="Password">
+                <button class="btn-p" style="background: var(--a-gold); color: var(--p-green);" onclick="handleRegister()">JOIN THE CLUB</button>
+                <p style="margin-top:15px; font-size:12px;">Member? <a href="#" onclick="toggleAuth()" style="color:var(--a-gold)">Log in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-screen" style="display:none; flex-direction:column; height:100vh;">
+        <div class="top-nav">
+            <div style="font-weight: 800; letter-spacing: 1px;">CIVILITY CHAT <span id="room-title" style="color: var(--a-gold); margin-left:10px;">| General</span></div>
+            <div class="user-status-strip">
+                <div id="top-pfp-container" onclick="document.getElementById('pfp-input').click()" style="cursor:pointer">
+                    <div id="top-avatar" class="mini-avatar" style="display:flex; align-items:center; justify-content:center; background:#fff; color:#333;">👤</div>
+                </div>
+                <div style="font-size:13px; font-weight:600;" id="top-username">User</div>
+                <button onclick="logout()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:white; padding:4px 12px; border-radius:8px; font-size:11px; cursor:pointer;">EXIT</button>
+            </div>
+        </div>
+
+        <div class="rooms-bar">
+            <button class="room-btn active" onclick="switchRoom('General')">Main Lobby</button>
+            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace ❤️</button>
+            <button class="room-btn" onclick="switchRoom('DM')">Private 📩</button>
+            <button class="room-btn" onclick="switchRoom('Gaming')">Arcade</button>
+            <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 💎</button>
+        </div>
+
+        <div id="main-container">
+            <div id="chat-section">
+                <div id="chat-box"></div>
+                <div style="background:white; padding:15px 25px; display:flex; gap:12px; border-top:1px solid #eee; align-items:center;">
+                    <input type="file" id="msg-file" style="display:none;" onchange="uploadAndSend()">
+                    <button onclick="document.getElementById('msg-file').click()" style="background:none; border:none; font-size:24px; cursor:pointer;">📷</button>
+                    <input type="text" id="msg-input" placeholder="Write a message..." style="flex:1; margin:0; border-radius:25px; padding-left:20px;">
+                    <button onclick="sendMsg()" class="btn-p" style="width:80px; border-radius:25px;">SEND</button>
+                </div>
+            </div>
+
+            <div id="profile-sidebar">
+                <div class="online-tag">● WHO'S ONLINE</div>
+                <div id="online-list" style="flex:1; overflow-y:auto; font-size:13px;">Loading...</div>
+                
+                <hr style="width:100%; border:0; border-top:1px solid #eee; margin:15px 0;">
+                
+                <a href="https://buymeacoffee.com/civilitychat" target="_blank" class="btn-p" style="background:var(--coffee-orange); color:black; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px; text-decoration:none;">
+                    ☕ BUY ME A COFFEE
+                </a>
+
+                <div id="mod-panel" style="display:none; margin-top:15px; padding:10px; background:#fff5f5; border-radius:12px; border:1px solid #ffe3e3;">
+                    <label style="font-size:10px; color:var(--admin-red); font-weight:800;">ADMIN PANEL</label>
+                    <input type="text" id="mod-target" placeholder="User Email" style="font-size:11px; padding:6px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                        <button class="btn-p" style="background:var(--admin-red); font-size:10px; padding:5px;" onclick="adminAction('ban')">BAN</button>
+                        <button class="btn-p" style="background:var(--vip-blue); font-size:10px; padding:5px;" onclick="adminAction('makeVIP')">VIP</button>
+                    </div>
+                </div>
+                
+                <input type="file" id="pfp-input" style="display:none;" onchange="updateProfilePic()">
+                <textarea id="my-bio" style="font-size:11px; height:60px; margin-top:15px;" placeholder="Update your bio..."></textarea>
+                <button onclick="updateProfile()" class="btn-p" style="padding:6px; font-size:11px; background:var(--a-gold); color:var(--p-green);">SAVE BIO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userEmail = localStorage.getItem('userEmail'), username = localStorage.getItem('username'), isAdmin = false, currentRoom = 'General', currentAvatar = '👤';
+        if (userEmail) enterChat();
+
+        function toggleAuth() {
+            const login = document.getElementById('login-form'), reg = document.getElementById('register-form');
+            login.style.display = login.style.display === 'none' ? 'block' : 'none';
+            reg.style.display = reg.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function enterChat() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
+            checkStatus();
+        }
+
+        async function handleLogin() {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: document.getElementById('l-email').value, password: document.getElementById('l-pass').value })
+            });
+            if(res.ok) {
+                const data = await res.json();
+                localStorage.setItem('userEmail', data.email);
+                localStorage.setItem('username', data.username);
+                location.reload();
+            } else alert("Invalid credentials");
+        }
+
+        async function handleRegister() {
+            await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: document.getElementById('r-user').value, email: document.getElementById('r-email').value, password: document.getElementById('r-pass').value })
+            });
+            alert("Account created! Please log in.");
+            toggleAuth();
+        }
+
+        async function checkStatus() {
+            const res = await fetch(`/api/user-status?email=${userEmail}`);
+            const data = await res.json();
+            isAdmin = data.isAdmin;
+            currentAvatar = data.avatar;
+            document.getElementById('top-avatar').innerHTML = currentAvatar.includes('/') ? `<img src="${currentAvatar}" class="mini-avatar">` : currentAvatar;
+            document.getElementById('top-username').innerText = username;
+            document.getElementById('my-bio').value = data.bio || "";
+            if(isAdmin) document.getElementById('mod-panel').style.display = 'block';
+            loadMessages(true);
+            updateOnlineList();
+        }
+
+        async function updateOnlineList() {
+            if(!userEmail) return;
+            await fetch('/api/update-profile', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, lastSeen: new Date() }) });
+            const res = await fetch('/api/online-users');
+            const users = await res.json();
+            const list = document.getElementById('online-list');
+            list.innerHTML = users.map(u => `<div style="padding:8px 0; border-bottom:1px solid #f5f5f5; display:flex; align-items:center; gap:8px;">
+                <div style="width:8px; height:8px; background:#2ecc71; border-radius:50%"></div> ${u.username}
+            </div>`).join('');
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            return data.url;
+        }
+
+        async function updateProfilePic() {
+            const file = document.getElementById('pfp-input').files[0];
+            if(!file) return;
+            const url = await uploadFile(file);
+            currentAvatar = url;
+            updateProfile();
+        }
+
+        async function updateProfile() {
+            await fetch('/api/update-profile', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: userEmail, bio: document.getElementById('my-bio').value, avatar: currentAvatar })
+            });
+            location.reload();
+        }
+
+        async function sendMsg() {
+            const input = document.getElementById('msg-input');
+            if(!input.value) return;
+            await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, text: input.value, room: currentRoom }) });
+            input.value = '';
+            loadMessages();
+        }
+
+        async function uploadAndSend() {
+            const file = document.getElementById('msg-file').files[0];
+            if(!file) return;
+            const url = await uploadFile(file);
+            await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, text: "📷 Shared a photo", imageUrl: url, room: currentRoom }) });
+            loadMessages();
+        }
+
+        async function loadMessages(forceClear = false) {
+            const res = await fetch(`/api/messages?room=${currentRoom}&userEmail=${userEmail}`);
+            const messages = await res.json();
+            const box = document.getElementById('chat-box');
+            if (forceClear) box.innerHTML = '';
+            let addedNew = false;
+            messages.forEach(m => {
+                if (!document.getElementById(`msg-${m._id}`)) {
+                    const div = document.createElement('div');
+                    div.id = `msg-${m._id}`;
+                    div.className = 'message';
+                    div.style.alignSelf = m.email === userEmail ? 'flex-end' : 'flex-start';
+                    if(m.email === userEmail) div.style.background = '#e1f5fe';
+                    
+                    const img = m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:100%; border-radius:10px; margin-top:10px;">` : '';
+                    div.innerHTML = `<div class="msg-header"><strong>${m.username}</strong> ${m.isAdmin?'<span style="color:red; font-size:9px">[ADMIN]</span>':''}</div>
+                                     <div style="font-size:14px;">${m.text}</div>${img}`;
+                    box.appendChild(div);
+                    addedNew = true;
+                }
+            });
+            if (addedNew) box.scrollTop = box.scrollHeight;
+        }
+
+        function switchRoom(room) {
+            currentRoom = room;
+            document.getElementById('room-title').innerText = `| ${room}`;
+            document.querySelectorAll('.room-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(room.split(' ')[0])));
+            loadMessages(true);
+        }
+
+        async function adminAction(action) {
+            const target = document.getElementById('mod-target').value;
+            await fetch('/api/admin/action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ adminEmail: userEmail, targetEmail: target, action }) });
+            alert("Success!");
+        }
+
+        function logout() { localStorage.clear(); location.reload(); }
+        setInterval(() => loadMessages(false), 4000);
+        setInterval(updateOnlineList, 10000);
+    </script>
+</body>
+</html>
