@@ -298,8 +298,8 @@
                     if(m.email === userEmail) div.style.background = '#e1f5fe';
                     
                     const img = m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:100%; border-radius:10px; margin-top:10px;">` : '';
-                    div.innerHTML = `<div class="msg-header"><strong>${m.username}</strong> ${m.isAdmin?'<span style="color:red; font-size:9px">[ADMIN]</span>':''}</div>
-                                     <div style="font-size:14px;">${m.text}</div>${img}`;
+                    div.innerHTML = `<div class="msg-header"><strong onclick="openProfile('${m.email}')" style="cursor:pointer; text-decoration:underline;">${m.username}</strong> ${m.isAdmin?'<span style="color:red; font-size:9px">[ADMIN]</span>':''}</div>
+                 <div style="font-size:14px;">${m.text}</div>${img}`;
                     box.appendChild(div);
                     addedNew = true;
                 }
@@ -323,6 +323,21 @@
         function logout() { localStorage.clear(); location.reload(); }
         setInterval(() => loadMessages(false), 4000);
         setInterval(updateOnlineList, 10000);
+        async function openProfile(email) {
+    const res = await fetch(`/api/profile/${email}`);
+    if(!res.ok) return;
+    const user = await res.json();
+    
+    // Fill the modal with data from the server
+    document.getElementById('pm-username').innerText = user.username;
+    document.getElementById('pm-avatar').innerText = user.avatar || '👤';
+    document.getElementById('pm-bio').innerText = user.bio || "No bio yet.";
+    document.getElementById('pm-join').innerText = "Member since: " + new Date(user.joinDate).toLocaleDateString();
+    
+    // Show the modal
+    document.getElementById('p-modal').style.display = 'flex';
+}
     </script>
+    
 </body>
 </html>
