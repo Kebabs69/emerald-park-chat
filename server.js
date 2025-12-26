@@ -115,7 +115,7 @@ app.get('/api/messages', async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
 });
 
-// FIXED: Message Posting Route
+// FIXED: Message Posting Route with proper Image Saving
 app.post('/api/messages', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
@@ -182,6 +182,7 @@ app.get('/api/user-status', async (req, res) => {
     res.json(user);
 });
 
+// REGISTER ROUTE
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
@@ -205,6 +206,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// LOGIN ROUTE
 app.post('/api/login', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email, password: req.body.password });
@@ -213,6 +215,7 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
+// API route for viewing profiles
 app.get('/api/profile/:email', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.params.email })
