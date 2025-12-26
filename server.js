@@ -9,24 +9,28 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Ensure upload directory exists
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
+// Multer configuration for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
 
+// Serve static files
 app.use(express.static(path.join(__dirname)));
 app.use('/uploads', express.static(uploadDir));
 
+// Database connection
 const mongoURI = process.env.MONGO_URI; 
-
 mongoose.connect(mongoURI)
     .then(() => console.log("☕ Database Connected Successfully"))
     .catch(err => console.log("❌ DB Error:", err));
 
+// User Schema
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true }, 
     email: { type: String, unique: true, required: true }, 
@@ -43,6 +47,7 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
+// Message Schema
 const MessageSchema = new mongoose.Schema({
     username: String, 
     email: String, 
@@ -58,6 +63,7 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
+// Support Request Schema
 const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     email: String,
     username: String,
@@ -66,6 +72,7 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
+// API Routes
 app.get('/api/online-users', async (req, res) => {
     try {
         const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -175,6 +182,7 @@ app.get('/api/user-status', async (req, res) => {
     res.json(user);
 });
 
+// UPDATED: Register route with automatic welcome bot
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
@@ -206,6 +214,7 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
+// NEW: API route for viewing profiles
 app.get('/api/profile/:email', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.params.email })
