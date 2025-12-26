@@ -153,15 +153,20 @@ app.post('/api/support', async (req, res) => {
 
 app.delete('/api/messages/:id', async (req, res) => {
     try {
-        const adminEmail = req.query.adminEmail;
+        // We get the email from the headers or query
+        const adminEmail = req.query.adminEmail; 
         const user = await User.findOne({ email: adminEmail });
+        
         if (user && user.isAdmin) {
             await Message.findByIdAndDelete(req.params.id);
-            res.json({ success: true });
-        } else { res.status(403).json("Unauthorized"); }
-    } catch (err) { res.status(500).json("Purge failed"); }
+            return res.json({ success: true });
+        } else { 
+            return res.status(403).json("Unauthorized: You are not an admin"); 
+        }
+    } catch (err) { 
+        res.status(500).json("Purge failed"); 
+    }
 });
-
 app.post('/api/update-profile', async (req, res) => {
     try {
         const { email, bio, status, avatar, lastSeen } = req.body;

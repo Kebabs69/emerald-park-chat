@@ -209,17 +209,35 @@
             toggleAuth();
         }
 
-        async function checkStatus() {
-            const res = await fetch(`/api/user-status?email=${userEmail}`);
-            const data = await res.json();
-            isAdmin = data.isAdmin;
-            currentAvatar = data.avatar;
-            document.getElementById('top-avatar').innerHTML = currentAvatar.includes('/') ? `<img src="${currentAvatar}" class="mini-avatar">` : currentAvatar;
-            document.getElementById('top-username').innerText = username;
-            document.getElementById('my-bio').value = data.bio || "";
-            if(isAdmin) document.getElementById('mod-panel').style.display = 'block';
-            loadMessages(true);
-            updateOnlineList();
+        async function loadMessages(forceClear = false) {
+            const res = await fetch(`/api/messages?room=${currentRoom}&userEmail=${userEmail}`);
+            const messages = await res.json();
+            const box = document.getElementById('chat-box');
+            if (forceClear) box.innerHTML = '';
+            let addedNew = false;
+            messages.forEach(m => {
+                if (!document.getElementById(`msg-${m._id}`)) {
+                    const div = document.createElement('div');
+                    div.id = `msg-${m._id}`;
+                    div.className = 'message';
+                    div.style.alignSelf = m.email === userEmail ? 'flex-end' : 'flex-start';
+                    if(m.email === userEmail) div.style.background = '#e1f5fe';
+                    
+                    // Added: Check if current user is admin to show delete button
+                    const deleteBtn = isAdmin ? `<button onclick="deleteMsg('${m._id}')" style="color:var(--admin-red); background:none; border:none; cursor:pointer; font-size:10px; margin-left:10px; font-weight:bold;">[DELETE]</button>` : '';
+                    
+                    const img = m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:100%; border-radius:10px; margin-top:10px;">` : '';
+                    div.innerHTML = `<div class="msg-header">
+                                        <strong>${m.username}</strong> 
+                                        ${m.isAdmin?'<span style="color:red; font-size:9px">[ADMIN]</span>':''}
+                                        ${deleteBtn}
+                                     </div>
+                                     <div style="font-size:14px;">${m.text}</div>${img}`;
+                    box.appendChild(div);
+                    addedNew = true;
+                }
+            });
+            if (addedNew) box.scrollTop = box.scrollHeight;
         }
 
         async function updateOnlineList() {
@@ -264,6 +282,20 @@
             await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, text: input.value, room: currentRoom }) });
             input.value = '';
             loadMessages();
+        }
+        async function deleteMsg(messageId) {
+            if (!confirm("Are you sure you want to delete this message?")) return;
+            
+            // Sends the delete request to the server with your admin email for verification
+            const res = await fetch(`/api/messages/${messageId}?adminEmail=${userEmail}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                document.getElementById(`msg-${messageId}`).remove();
+            } else {
+                alert("Delete failed. You must be an admin to do this.");
+            }
         }
 
         async function uploadAndSend() {
