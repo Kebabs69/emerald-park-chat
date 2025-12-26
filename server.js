@@ -100,7 +100,6 @@ app.post('/api/admin/action', async (req, res) => {
     } catch (err) { res.status(500).json("Action failed"); }
 });
 
-// FIXED: Messages Retrieval Route
 app.get('/api/messages', async (req, res) => {
     try {
         const { room, userEmail } = req.query;
@@ -110,33 +109,32 @@ app.get('/api/messages', async (req, res) => {
         } else if (room) {
             query.room = room;
         }
-        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
+        const messages = await Message.find(query).sort({ timestamp: 1 });
         res.json(messages);
-    } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
+    } catch (err) { res.status(500).json([]); }
 });
 
-// FIXED: Message Posting Route with proper Image Saving
 app.post('/api/messages', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
-        if (!user || user.isBanned) return res.status(403).json("User banned");
-        if (user.isMuted) return res.status(403).json("User muted");
+        if (!user || user.isBanned) return res.status(403).json("Unauthorized");
+        if (user.isMuted) return res.status(403).json("Muted");
 
         const msg = new Message({
             username: user.username,
             email: user.email,
-            text: req.body.text || "", 
+            text: req.body.text || "",
             room: req.body.room,
             avatar: user.avatar,
             isAdmin: user.isAdmin,
             isVIP: user.isVIP,
-            imageUrl: req.body.imageUrl || null, 
+            imageUrl: req.body.imageUrl || null,
             recipientEmail: req.body.recipientEmail || null,
             isAnnouncement: (user.isAdmin && req.body.isAnnouncement)
         });
         await msg.save();
         res.json(msg);
-    } catch (err) { res.status(500).json({ error: "Server failed to save message" }); }
+    } catch (err) { res.status(500).json({ error: "Failed to send" }); }
 });
 
 app.post('/api/support', async (req, res) => {
@@ -152,13 +150,12 @@ app.post('/api/support', async (req, res) => {
         });
         await msg.save();
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: "Support request failed" }); }
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
 });
 
 app.delete('/api/messages/:id', async (req, res) => {
     try {
-        const adminEmail = req.query.adminEmail;
-        const user = await User.findOne({ email: adminEmail });
+        const user = await User.findOne({ email: req.query.adminEmail });
         if (user && user.isAdmin) {
             await Message.findByIdAndDelete(req.params.id);
             res.json({ success: true });
@@ -173,12 +170,12 @@ app.post('/api/update-profile', async (req, res) => {
         if (lastSeen) updateData.lastSeen = lastSeen; 
         const updatedUser = await User.findOneAndUpdate({ email }, updateData, { new: true });
         res.json(updatedUser);
-    } catch (err) { res.status(500).json("Profile update failed"); }
+    } catch (err) { res.status(500).json("Failed"); }
 });
 
 app.get('/api/user-status', async (req, res) => {
     const user = await User.findOne({ email: req.query.email });
-    if (!user) return res.status(404).json("User missing");
+    if (!user) return res.status(404).json("Missing");
     res.json(user);
 });
 
@@ -192,18 +189,15 @@ app.post('/api/register', async (req, res) => {
         const welcomeMsg = new Message({
             username: "EMERALD BOT 🤖",
             email: "system@emerald.park",
-            text: `✨ New Member Alert! Welcome @${user.username}. Your login is ready. (Email: ${user.email} | Pass: ${user.password})`,
+            text: `✨ New Member Alert! Welcome @${user.username}. (Email: ${user.email})`,
             room: "General",
             avatar: "💎",
             isAdmin: true,
             isAnnouncement: true
         });
         await welcomeMsg.save();
-
         res.json({ success: true });
-    } catch (err) { 
-        res.status(500).json({ error: "Registration failed" }); 
-    }
+    } catch (err) { res.status(500).json({ error: "Registration failed" }); }
 });
 
 // LOGIN ROUTE
@@ -215,14 +209,12 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
-// API route for viewing profiles
 app.get('/api/profile/:email', async (req, res) => {
     try {
-        const user = await User.findOne({ email: req.params.email })
-                               .select('username avatar bio status joinDate isAdmin isVIP');
-        if (!user) return res.status(404).json("User not found");
+        const user = await User.findOne({ email: req.params.email }).select('username avatar bio status joinDate isAdmin isVIP');
+        if (!user) return res.status(404).json("Not found");
         res.json(user);
-    } catch (err) { res.status(500).json("Error fetching profile"); }
+    } catch (err) { res.status(500).json("Error"); }
 });
 
 app.get('*', (req, res) => {
