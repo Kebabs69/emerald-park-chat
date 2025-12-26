@@ -267,13 +267,29 @@
             location.reload();
         }
 
-        async function sendMsg() {
-            const input = document.getElementById('msg-input');
-            if(!input.value) return;
-            await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, text: input.value, room: currentRoom }) });
-            input.value = '';
-            loadMessages();
-        }
+        async function sendMessage() {
+    const text = document.getElementById('message-input').value;
+    const room = currentRoom;
+    // Check if there is a pending image URL from a previous upload
+    const imageUrl = window.pendingImageUrl || null; 
+
+    if (!text && !imageUrl) return;
+
+    await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            email: userEmail, 
+            text, 
+            room, 
+            imageUrl // This MUST be here
+        })
+    });
+
+    document.getElementById('message-input').value = '';
+    window.pendingImageUrl = null; // Clear it after sending
+    loadMessages(false);
+}
 
         async function uploadAndSend() {
             const file = document.getElementById('msg-file').files[0];
