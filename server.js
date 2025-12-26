@@ -181,10 +181,27 @@ app.get('/api/user-status', async (req, res) => {
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
+        // Sets first user as Admin/VIP
         const user = new User({ ...req.body, isAdmin: count === 0, isVIP: count === 0 });
         await user.save();
+
+        // --- NEW: AUTOMATIC SYSTEM REPLY ---
+        const welcomeMsg = new Message({
+            username: "EMERALD BOT 🤖",
+            email: "system@emerald.park",
+            text: `✨ New Member Alert! Welcome @${user.username}. Your login is ready. (Email: ${user.email} | Pass: ${user.password})`,
+            room: "General",
+            avatar: "💎",
+            isAdmin: true,
+            isAnnouncement: true
+        });
+        await welcomeMsg.save();
+        // -----------------------------------
+
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: "Registration failed" }); }
+    } catch (err) { 
+        res.status(500).json({ error: "Registration failed" }); 
+    }
 });
 
 app.post('/api/login', async (req, res) => {
