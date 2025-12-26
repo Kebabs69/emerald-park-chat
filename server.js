@@ -100,6 +100,7 @@ app.post('/api/admin/action', async (req, res) => {
     } catch (err) { res.status(500).json("Action failed"); }
 });
 
+// FIXED: Messages Retrieval Route
 app.get('/api/messages', async (req, res) => {
     try {
         const { room, userEmail } = req.query;
@@ -107,22 +108,29 @@ app.get('/api/messages', async (req, res) => {
         if (room === 'DM') {
             query = { room: 'DM', $or: [{ email: userEmail }, { recipientEmail: userEmail }] };
         } else if (room) {
-        // Inside app.post('/api/messages')
+            query.room = room;
+        }
+        const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
+        res.json(messages);
+    } catch (err) { res.status(500).json({ error: "Could not fetch messages" }); }
+});
+
+// FIXED: Message Posting Route
+app.post('/api/messages', async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.body.email });
+        if (!user || user.isBanned) return res.status(403).json("User banned");
+        if (user.isMuted) return res.status(403).json("User muted");
+
         const msg = new Message({
             username: user.username,
             email: user.email,
-            text: req.body.text || "", // Ensures text doesn't break if sending only a photo
+            text: req.body.text || "", 
             room: req.body.room,
             avatar: user.avatar,
             isAdmin: user.isAdmin,
             isVIP: user.isVIP,
-            imageUrl: req.body.imageUrl || null, // Ensures the photo URL is saved
-            recipientEmail: req.body.recipientEmail || null
-        });
-        await msg.save();
-            isAdmin: user.isAdmin,
-            isVIP: user.isVIP,
-            imageUrl: req.body.imageUrl || null,
+            imageUrl: req.body.imageUrl || null, 
             recipientEmail: req.body.recipientEmail || null,
             isAnnouncement: (user.isAdmin && req.body.isAnnouncement)
         });
@@ -174,7 +182,6 @@ app.get('/api/user-status', async (req, res) => {
     res.json(user);
 });
 
-// UPDATED: Register route with automatic welcome bot
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
@@ -206,7 +213,6 @@ app.post('/api/login', async (req, res) => {
     } catch (err) { res.status(500).json("Login error"); }
 });
 
-// NEW: API route for viewing profiles
 app.get('/api/profile/:email', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.params.email })
