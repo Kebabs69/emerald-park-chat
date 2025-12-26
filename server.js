@@ -36,7 +36,7 @@ const UserSchema = new mongoose.Schema({
     isMuted: { type: Boolean, default: false }, 
     isBanned: { type: Boolean, default: false },
     avatar: { type: String, default: '👤' },
-    bio: { type: String, default: "Networking on Civility Chat!" }, // UPDATED BIO
+    bio: { type: String, default: "Networking on Civility Chat!" },
     status: { type: String, default: "Online" },
     lastSeen: { type: Date, default: Date.now }, 
     joinDate: { type: Date, default: Date.now }
@@ -66,9 +66,6 @@ const SupportRequest = mongoose.model('SupportRequest', new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 }));
 
-// --- API ROUTES ---
-
-// ADDED: Get users active in the last 5 minutes
 app.get('/api/online-users', async (req, res) => {
     try {
         const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -117,7 +114,7 @@ app.post('/api/messages', async (req, res) => {
         if (user.isMuted) return res.status(403).json("User muted");
         if (req.body.room === 'VIP Lounge' && !user.isVIP && !user.isAdmin) return res.status(402).json({ error: "VIP Membership Required" });
 
-        let cleanText = req.body.text.replace(/<[^>]*>?/gm, '').trim();
+        let cleanText = req.body.text ? req.body.text.replace(/<[^>]*>?/gm, '').trim() : "";
         const msg = new Message({
             username: user.username,
             email: user.email,
@@ -166,7 +163,7 @@ app.post('/api/update-profile', async (req, res) => {
     try {
         const { email, bio, status, avatar, lastSeen } = req.body;
         const updateData = { bio, status, avatar };
-        if (lastSeen) updateData.lastSeen = lastSeen; // Update activity timestamp
+        if (lastSeen) updateData.lastSeen = lastSeen; 
         const updatedUser = await User.findOneAndUpdate({ email }, updateData, { new: true });
         res.json(updatedUser);
     } catch (err) { res.status(500).json("Profile update failed"); }
@@ -181,11 +178,9 @@ app.get('/api/user-status', async (req, res) => {
 app.post('/api/register', async (req, res) => {
     try {
         const count = await User.countDocuments();
-        // Sets first user as Admin/VIP
         const user = new User({ ...req.body, isAdmin: count === 0, isVIP: count === 0 });
         await user.save();
 
-        // --- NEW: AUTOMATIC SYSTEM REPLY ---
         const welcomeMsg = new Message({
             username: "EMERALD BOT 🤖",
             email: "system@emerald.park",
@@ -196,7 +191,6 @@ app.post('/api/register', async (req, res) => {
             isAnnouncement: true
         });
         await welcomeMsg.save();
-        // -----------------------------------
 
         res.json({ success: true });
     } catch (err) { 
@@ -211,7 +205,7 @@ app.post('/api/login', async (req, res) => {
         if (user) { res.json(user); } else { res.status(401).json("Invalid credentials"); }
     } catch (err) { res.status(500).json("Login error"); }
 });
-// --- ADD THIS NEW ROUTE ---
+
 app.get('/api/profile/:email', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.params.email })
