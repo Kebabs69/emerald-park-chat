@@ -1,50 +1,62 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const path = require('path');
-require('dotenv').config(); // Essential for security
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
 
-// Use the ENV variable we created in Step 1
-const mongoURI = process.env.MONGO_URI; 
+// Connection
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("💎 Civility DB Connected"))
+    .catch(err => console.log("❌ Connection Error:", err));
 
-mongoose.connect(mongoURI)
-    .then(() => console.log("💎 Database Securely Connected"))
-    .catch(err => console.error("❌ DB Error:", err));
-
-// Models stay the same so you don't lose data
+// Database Schemas (Keeping your existing structure)
 const User = mongoose.model('User', new mongoose.Schema({
-    username: String, email: String, password: String, isAdmin: Boolean
+    username: String, email: { type: String, unique: true }, password: String,
+    avatar: { type: String, default: '👤' }, isAdmin: { type: Boolean, default: false },
+    isVIP: { type: Boolean, default: false }, lastSeen: { type: Date, default: Date.now }
 }));
 
 const Message = mongoose.model('Message', new mongoose.Schema({
-    username: String, email: String, text: String, room: String,
-    timestamp: { type: Date, default: Date.now }
+    username: String, email: String, text: String, room: String, 
+    avatar: String, isAdmin: Boolean, isVIP: Boolean, timestamp: { type: Date, default: Date.now }
 }));
 
 // API Routes
+app.post('/api/login', async (req, res) => {
+    const user = await User.findOne({ email: req.body.email, password: req.body.password });
+    if (user) {
+        await User.updateOne({ email: user.email }, { lastSeen: Date.now() });
+        res.json(user);
+    } else res.status(401).send("Fail");
+});
+
+app.post('/api/register', async (req, res) => {
+    try {
+        const count = await User.countDocuments();
+        const user = new User({ ...req.body, isAdmin: count === 0, isVIP: count === 0 });
+        await user.save();
+        res.json(user);
+    } catch (e) { res.status(400).send("Error"); }
+});
+
 app.get('/api/messages', async (req, res) => {
-    const msgs = await Message.find().sort({ timestamp: 1 }).limit(100);
+    const msgs = await Message.find({ room: req.query.room }).sort({ timestamp: 1 }).limit(50);
     res.json(msgs);
 });
 
 app.post('/api/messages', async (req, res) => {
-    // Basic Sanitization to keep it professional
-    const cleanText = req.body.text.replace(/<[^>]*>?/gm, ''); 
+    const cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
     const msg = new Message({ ...req.body, text: cleanText });
     await msg.save();
     res.json(msg);
 });
 
-app.post('/api/login', async (req, res) => {
-    const user = await User.findOne({ email: req.body.email, password: req.body.password });
-    if (user) res.json(user);
-    else res.status(401).json("Auth Failed");
-});
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Elite Server running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Civility running on ${PORT}`));
