@@ -1,0 +1,15 @@
+{
+  "name": "brewbound-cafe-chat",
+  "version": "2.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "mongoose": "^8.0.0",
+    "multer": "^2.0.2",
+    "socket.io": "^4.6.1"
+  }
+}
