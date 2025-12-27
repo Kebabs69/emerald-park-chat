@@ -2,338 +2,189 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Civility Chat | Elite Networking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civility | Elite Networking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --p-green: #1B3022; 
-            --a-gold: #D4AF37; 
-            --bg: #f8f9fa; 
-            --white: #ffffff;
-            --admin-red: #e74c3c; 
-            --vip-blue: #3498db; 
-            --coffee-orange: #FFDD00; 
-            --glass: rgba(255, 255, 255, 0.95);
+        :root {
+            --bg: #0f1113;
+            --sidebar: #1a1d21;
+            --accent: #D4AF37; /* Your Gold */
+            --text: #e1e1e1;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
         }
+
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; 
+            background: var(--bg); color: var(--text);
+            height: 100vh; display: flex; overflow: hidden;
+        }
+
+        /* Side Navigation */
+        .sidebar {
+            width: 280px; background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+
+        .brand-section { padding: 30px 20px; border-bottom: 1px solid var(--border); }
+        .brand-name { color: var(--accent); font-weight: 800; letter-spacing: 2px; font-size: 1.2rem; }
+
+        .nav-list { padding: 15px; flex: 1; overflow-y: auto; }
+        .nav-item {
+            padding: 12px 15px; border-radius: 8px; cursor: pointer;
+            margin-bottom: 5px; transition: 0.2s; color: #888;
+        }
+        .nav-item:hover, .nav-item.active { background: var(--glass); color: white; }
+
+        /* Main Chat Area */
+        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; }
         
-        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #333; }
-
-        #auth-screen { 
-            background: linear-gradient(135deg, var(--p-green) 0%, #2c4a35 100%);
-            height: 100vh; display: flex; align-items: center; justify-content: center;
-        }
-        .auth-card { 
-            background: var(--glass); padding: 40px; border-radius: 24px; width: 360px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4); text-align: center; border: 1px solid rgba(255,255,255,0.2);
-        }
-        .auth-logo-img { width: 120px; height: auto; margin-bottom: 20px; }
-        .auth-card h2 { color: var(--p-green); margin-bottom: 5px; font-weight: 800; }
-        .auth-card p { color: #666; font-size: 14px; margin-bottom: 25px; }
-
-        .top-nav {
-            background: var(--p-green); color: white; padding: 10px 20px;
+        .chat-header {
+            padding: 15px 30px; border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 3px solid var(--a-gold); z-index: 100;
-        }
-        .user-status-strip { display: flex; align-items: center; gap: 15px; }
-        .mini-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--a-gold); object-fit: cover; background: #eee; }
-
-        .rooms-bar { background: #264230; padding: 12px; display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; }
-        .room-btn { 
-            background: rgba(255,255,255,0.1); border: none; color: white; 
-            padding: 8px 20px; border-radius: 30px; cursor: pointer; transition: 0.3s; white-space: nowrap; font-size: 13px;
-        }
-        .room-btn.active { background: var(--a-gold); color: var(--p-green); font-weight: bold; }
-
-        #main-container { display: flex; flex: 1; overflow: hidden; }
-        #chat-section { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
-        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-
-        #profile-sidebar { 
-            width: 240px; background: var(--white); border-left: 1px solid #eee; 
-            display: flex; flex-direction: column; padding: 20px;
+            background: rgba(15, 17, 19, 0.8); backdrop-filter: blur(10px);
         }
 
-        .online-tag { 
-            background: #e8f5e9; color: #2ecc71; padding: 5px 10px; 
-            border-radius: 20px; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 15px;
+        #message-flow {
+            flex: 1; overflow-y: auto; padding: 25px;
+            display: flex; flex-direction: column; gap: 15px;
         }
 
-        .message { 
-            background: white; padding: 14px; border-radius: 15px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 80%; position: relative;
+        /* Professional Message Bubbles */
+        .msg-wrap { display: flex; flex-direction: column; max-width: 75%; }
+        .msg-wrap.mine { align-self: flex-end; align-items: flex-end; }
+        
+        .msg-info { font-size: 0.75rem; margin-bottom: 4px; opacity: 0.6; }
+        .bubble {
+            padding: 12px 18px; border-radius: 18px; line-height: 1.5;
+            background: var(--glass); border: 1px solid var(--border);
         }
-        .msg-header { font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .mine .bubble { background: var(--accent); color: black; font-weight: 500; border: none; }
 
-        input, textarea { 
-            width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; 
-            border-radius: 12px; box-sizing: border-box; font-size: 14px; transition: 0.3s;
+        /* Input Dock */
+        .input-dock { padding: 25px; background: var(--bg); }
+        .input-container {
+            background: var(--sidebar); border: 1px solid var(--border);
+            border-radius: 12px; padding: 10px 15px; display: flex; gap: 10px;
         }
-        input:focus { border-color: var(--a-gold); outline: none; }
-        .btn-p { 
-            width: 100%; padding: 12px; background: var(--p-green); color: white; border: none; 
-            border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s;
+        input#chat-input {
+            flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 1rem;
         }
 
-        @media (max-width: 900px) {
-            #profile-sidebar { display: none; }
+        /* Buy Me A Coffee - Floating Professional Style */
+        .bmc-btn {
+            position: fixed; bottom: 90px; right: 30px;
+            z-index: 99; transition: transform 0.3s;
+        }
+        .bmc-btn:hover { transform: scale(1.05); }
+
+        /* Auth Screen */
+        #login-overlay {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
         }
     </style>
 </head>
 <body>
-    <div id="auth-screen">
-        <div class="auth-card">
-            <img src="public/logo.png" class="auth-logo-img" alt="Civility Chat">
-            <h2>Civility Chat</h2>
-            <p>Experience the Elite Standard</p>
-            <div id="login-form">
-                <input type="email" id="l-email" placeholder="Email Address">
-                <input type="password" id="l-pass" placeholder="Password">
-                <button class="btn-p" onclick="handleLogin()">SIGN IN</button>
-                <p style="margin-top:15px; font-size:12px;">New here? <a href="#" onclick="toggleAuth()" style="color:var(--a-gold)">Create an account</a></p>
-            </div>
-            <div id="register-form" style="display:none;">
-                <input type="text" id="r-user" placeholder="Username">
-                <input type="email" id="r-email" placeholder="Email">
-                <input type="password" id="r-pass" placeholder="Password">
-                <button class="btn-p" style="background: var(--a-gold); color: var(--p-green);" onclick="handleRegister()">JOIN THE CLUB</button>
-                <p style="margin-top:15px; font-size:12px;">Member? <a href="#" onclick="toggleAuth()" style="color:var(--a-gold)">Log in</a></p>
-            </div>
+
+    <div class="bmc-btn">
+        <a href="https://www.buymeacoffee.com/YOUR_USERNAME" target="_blank">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important; width: 180px !important;">
+        </a>
+    </div>
+
+    <div id="login-overlay">
+        <div style="width: 350px; text-align: center;">
+            <h1 style="color: var(--accent)">CIVILITY</h1>
+            <p style="opacity: 0.6">Please authenticate to join the lounge.</p>
+            <input type="email" id="login-email" placeholder="Email" style="width:100%; padding:12px; margin:10px 0; background:#1a1d21; border:1px solid #333; color:white;">
+            <input type="password" id="login-pass" placeholder="Password" style="width:100%; padding:12px; margin:10px 0; background:#1a1d21; border:1px solid #333; color:white;">
+            <button onclick="handleLogin()" style="width:100%; padding:12px; background:var(--accent); border:none; font-weight:bold; cursor:pointer; margin-top:10px;">ENTER</button>
         </div>
     </div>
 
-    <div id="chat-screen" style="display:none; flex-direction:column; height:100vh;">
-        <div class="top-nav">
-            <div style="font-weight: 800; letter-spacing: 1px;">CIVILITY CHAT <span id="room-title" style="color: var(--a-gold); margin-left:10px;">| General</span></div>
-            <div class="user-status-strip">
-                <div id="top-pfp-container" onclick="document.getElementById('pfp-input').click()" style="cursor:pointer">
-                    <div id="top-avatar" class="mini-avatar" style="display:flex; align-items:center; justify-content:center; background:#fff; color:#333;">👤</div>
-                </div>
-                <div style="font-size:13px; font-weight:600;" id="top-username">User</div>
-                <button onclick="logout()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:white; padding:4px 12px; border-radius:8px; font-size:11px; cursor:pointer;">EXIT</button>
-            </div>
-        </div>
-
-        <div class="rooms-bar">
-            <button class="room-btn active" onclick="switchRoom('General')">Main Lobby</button>
-            <button class="room-btn" onclick="switchRoom('Dating site')">Garden Terrace ❤️</button>
-            <button class="room-btn" onclick="switchRoom('DM')">Private 📩</button>
-            <button class="room-btn" onclick="switchRoom('Gaming')">Arcade</button>
-            <button class="room-btn" onclick="switchRoom('VIP Lounge')">VIP Lounge 💎</button>
-        </div>
-
-        <div id="main-container">
-            <div id="chat-section">
-                <div id="chat-box"></div>
-                <div style="background:white; padding:15px 25px; display:flex; gap:12px; border-top:1px solid #eee; align-items:center;">
-                    <input type="file" id="msg-file" style="display:none;" onchange="uploadAndSend()">
-                    <button onclick="document.getElementById('msg-file').click()" style="background:none; border:none; font-size:24px; cursor:pointer;">📷</button>
-                    <input type="text" id="msg-input" placeholder="Write a message..." style="flex:1; margin:0; border-radius:25px; padding-left:20px;">
-                    <button onclick="sendMessage()" class="btn-p" style="width:80px; border-radius:25px;">SEND</button>
-                </div>
-            </div>
-
-            <div id="profile-sidebar">
-                <div class="online-tag">● WHO'S ONLINE</div>
-                <div id="online-list" style="flex:1; overflow-y:auto; font-size:13px;">Loading...</div>
-                <hr style="width:100%; border:0; border-top:1px solid #eee; margin:15px 0;">
-                <a href="https://buymeacoffee.com/civilitychat" target="_blank" class="btn-p" style="background:var(--coffee-orange); color:black; font-size:12px; display:flex; align-items:center; justify-content:center; gap:5px; text-decoration:none;">☕ BUY ME A COFFEE</a>
-                <div id="mod-panel" style="display:none; margin-top:15px; padding:10px; background:#fff5f5; border-radius:12px; border:1px solid #ffe3e3;">
-                    <label style="font-size:10px; color:var(--admin-red); font-weight:800;">ADMIN PANEL</label>
-                    <input type="text" id="mod-target" placeholder="User Email" style="font-size:11px; padding:6px;">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <button class="btn-p" style="background:var(--admin-red); font-size:10px; padding:5px;" onclick="adminAction('ban')">BAN</button>
-                        <button class="btn-p" style="background:var(--vip-blue); font-size:10px; padding:5px;" onclick="adminAction('makeVIP')">VIP</button>
-                    </div>
-                </div>
-                <input type="file" id="pfp-input" style="display:none;" onchange="updateProfilePic()">
-                <textarea id="my-bio" style="font-size:11px; height:60px; margin-top:15px;" placeholder="Update your bio..."></textarea>
-                <button onclick="updateProfile()" class="btn-p" style="padding:6px; font-size:11px; background:var(--a-gold); color:var(--p-green);">SAVE BIO</button>
-            </div>
+    <div class="sidebar">
+        <div class="brand-section"><div class="brand-name">CIVILITY</div></div>
+        <div class="nav-list">
+            <div class="nav-item active"># general-lounge</div>
+            <div class="nav-item">💎 vip-access</div>
+            <div class="nav-item">🛠 support-desk</div>
         </div>
     </div>
 
-    <div id="p-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center;">
-        <div style="background:white; padding:25px; border-radius:15px; text-align:center; width:280px; position:relative; border-bottom:5px solid #D4AF37;">
-            <span onclick="document.getElementById('p-modal').style.display='none'" style="position:absolute; top:10px; right:15px; cursor:pointer;">✕</span>
-            <div id="pm-avatar" style="font-size:50px; margin-bottom:10px;"></div>
-            <h3 id="pm-username"></h3>
-            <p id="pm-bio" style="font-size:13px; color:#555; font-style:italic;"></p>
-            <p id="pm-join" style="font-size:10px; color:#aaa; margin-top:10px;"></p>
+    <div class="main-chat">
+        <div class="chat-header">
+            <span id="room-label"># general-lounge</span>
+            <button onclick="logout()" style="background:none; border:none; color:#ff5f57; cursor:pointer;">Exit</button>
+        </div>
+        
+        <div id="message-flow"></div>
+
+        <div class="input-dock">
+            <div class="input-container">
+                <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') send()">
+                <button onclick="send()" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:bold;">SEND</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let userEmail = localStorage.getItem('userEmail'), username = localStorage.getItem('username'), isAdmin = false, currentRoom = 'General', currentAvatar = '👤';
-        if (userEmail) enterChat();
-
-        // ENABLE ENTER KEY
-        document.getElementById('msg-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        function toggleAuth() {
-            const login = document.getElementById('login-form'), reg = document.getElementById('register-form');
-            login.style.display = login.style.display === 'none' ? 'block' : 'none';
-            reg.style.display = reg.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function enterChat() {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('chat-screen').style.display = 'flex';
-            checkStatus();
-        }
+        let user = JSON.parse(localStorage.getItem('user'));
+        if(user) document.getElementById('login-overlay').style.display = 'none';
 
         async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-pass').value;
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: document.getElementById('l-email').value, password: document.getElementById('l-pass').value })
+                body: JSON.stringify({ email, password })
             });
             if(res.ok) {
                 const data = await res.json();
-                localStorage.setItem('userEmail', data.email);
-                localStorage.setItem('username', data.username);
+                localStorage.setItem('user', JSON.stringify(data));
                 location.reload();
-            } else alert("Invalid credentials");
+            } else {
+                alert("Invalid Credentials");
+            }
         }
 
-        async function handleRegister() {
-            await fetch('/api/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username: document.getElementById('r-user').value, email: document.getElementById('r-email').value, password: document.getElementById('r-pass').value })
-            });
-            alert("Account created! Please log in.");
-            toggleAuth();
-        }
-
-        async function checkStatus() {
-            const res = await fetch(`/api/user-status?email=${userEmail}`);
-            const data = await res.json();
-            isAdmin = data.isAdmin;
-            currentAvatar = data.avatar;
-            document.getElementById('top-avatar').innerHTML = currentAvatar.includes('/') ? `<img src="${currentAvatar}" class="mini-avatar">` : currentAvatar;
-            document.getElementById('top-username').innerText = username;
-            document.getElementById('my-bio').value = data.bio || "";
-            if(isAdmin) document.getElementById('mod-panel').style.display = 'block';
-            loadMessages(true);
-            updateOnlineList();
-        }
-
-        async function updateOnlineList() {
-            if(!userEmail) return;
-            await fetch('/api/update-profile', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, lastSeen: new Date() }) });
-            const res = await fetch('/api/online-users');
-            const users = await res.json();
-            const list = document.getElementById('online-list');
-            list.innerHTML = users.map(u => `<div style="padding:8px 0; border-bottom:1px solid #f5f5f5; display:flex; align-items:center; gap:8px;">
-                <div style="width:8px; height:8px; background:#2ecc71; border-radius:50%"></div> ${u.username}
-            </div>`).join('');
-        }
-
-        async function uploadFile(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            return data.url;
-        }
-
-        async function updateProfilePic() {
-            const file = document.getElementById('pfp-input').files[0];
-            if(!file) return;
-            const url = await uploadFile(file);
-            currentAvatar = url;
-            updateProfile();
-        }
-
-        async function updateProfile() {
-            await fetch('/api/update-profile', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: userEmail, bio: document.getElementById('my-bio').value, avatar: currentAvatar })
-            });
-            location.reload();
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('msg-input');
-            const text = input.value;
-            const imageUrl = window.pendingImageUrl || null; 
-            if (!text && !imageUrl) return;
+        async function send() {
+            const input = document.getElementById('chat-input');
+            if(!input.value.trim()) return;
 
             await fetch('/api/messages', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userEmail, text, room: currentRoom, imageUrl })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: user.username,
+                    email: user.email,
+                    text: input.value,
+                    room: 'General'
+                })
             });
             input.value = '';
-            window.pendingImageUrl = null;
-            loadMessages(false);
+            refreshMessages();
         }
 
-        async function uploadAndSend() {
-            const file = document.getElementById('msg-file').files[0];
-            if(!file) return;
-            const url = await uploadFile(file);
-            await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: userEmail, text: "📷 Shared a photo", imageUrl: url, room: currentRoom }) });
-            loadMessages(false);
-        }
-
-        async function loadMessages(forceClear = false) {
-            const res = await fetch(`/api/messages?room=${currentRoom}&userEmail=${userEmail}`);
-            const messages = await res.json();
-            const box = document.getElementById('chat-box');
-            if (forceClear) box.innerHTML = '';
-            let addedNew = false;
-            messages.forEach(m => {
-                if (!document.getElementById(`msg-${m._id}`)) {
-                    const div = document.createElement('div');
-                    div.id = `msg-${m._id}`;
-                    div.className = 'message';
-                    div.style.alignSelf = m.email === userEmail ? 'flex-end' : 'flex-start';
-                    if(m.email === userEmail) div.style.background = '#e1f5fe';
-                    
-                    const imgUrl = m.imageUrl ? (m.imageUrl.startsWith('/') ? window.location.origin + m.imageUrl : m.imageUrl) : null;
-                    const imgHtml = imgUrl ? `<img src="${imgUrl}" style="max-width:100%; border-radius:10px; margin-top:10px;">` : '';
-                    
-                    div.innerHTML = `<div class="msg-header"><strong onclick="openProfile('${m.email}')" style="cursor:pointer; text-decoration:underline;">${m.username}</strong> ${m.isAdmin?'<span style="color:red; font-size:9px">[ADMIN]</span>':''}</div>
-                                     <div style="font-size:14px;">${m.text || ""}</div>${imgHtml}`;
-                    box.appendChild(div);
-                    addedNew = true;
-                }
-            });
-            if (addedNew) box.scrollTop = box.scrollHeight;
-        }
-
-        function switchRoom(room) {
-            currentRoom = room;
-            document.getElementById('room-title').innerText = `| ${room}`;
-            document.querySelectorAll('.room-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(room.split(' ')[0])));
-            loadMessages(true);
-        }
-
-        async function adminAction(action) {
-            const target = document.getElementById('mod-target').value;
-            await fetch('/api/admin/action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ adminEmail: userEmail, targetEmail: target, action }) });
-            alert("Success!");
+        async function refreshMessages() {
+            const res = await fetch('/api/messages');
+            const data = await res.json();
+            const container = document.getElementById('message-flow');
+            container.innerHTML = data.map(m => `
+                <div class="msg-wrap ${m.email === user.email ? 'mine' : ''}">
+                    <span class="msg-info">${m.username} • ${new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    <div class="bubble">${m.text}</div>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
         }
 
         function logout() { localStorage.clear(); location.reload(); }
-        setInterval(() => loadMessages(false), 4000);
-        setInterval(updateOnlineList, 10000);
-
-        async function openProfile(email) {
-            const res = await fetch(`/api/profile/${email}`);
-            if(!res.ok) return;
-            const user = await res.json();
-            document.getElementById('pm-username').innerText = user.username;
-            document.getElementById('pm-avatar').innerText = user.avatar || '👤';
-            document.getElementById('pm-bio').innerText = user.bio || "No bio yet.";
-            document.getElementById('pm-join').innerText = "Member since: " + new Date(user.joinDate).toLocaleDateString();
-            document.getElementById('p-modal').style.display = 'flex';
-        }
+        setInterval(refreshMessages, 3000);
+        if(user) refreshMessages();
     </script>
 </body>
 </html>
