@@ -1,62 +1,69 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path');
 const cors = require('cors');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const path = require('path');
 
+dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
 
-// Connection
+// Connect to your MongoDB
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("💎 Civility DB Connected"))
-    .catch(err => console.log("❌ Connection Error:", err));
+    .then(() => console.log('Member Database Connected'))
+    .catch(err => console.error('Connection Error:', err));
 
-// Database Schemas (Keeping your existing structure)
-const User = mongoose.model('User', new mongoose.Schema({
-    username: String, email: { type: String, unique: true }, password: String,
-    avatar: { type: String, default: '👤' }, isAdmin: { type: Boolean, default: false },
-    isVIP: { type: Boolean, default: false }, lastSeen: { type: Date, default: Date.now }
-}));
-
-const Message = mongoose.model('Message', new mongoose.Schema({
-    username: String, email: String, text: String, room: String, 
-    avatar: String, isAdmin: Boolean, isVIP: Boolean, timestamp: { type: Date, default: Date.now }
-}));
-
-// API Routes
-app.post('/api/login', async (req, res) => {
-    const user = await User.findOne({ email: req.body.email, password: req.body.password });
-    if (user) {
-        await User.updateOne({ email: user.email }, { lastSeen: Date.now() });
-        res.json(user);
-    } else res.status(401).send("Fail");
+// Member Schema
+const UserSchema = new mongoose.Schema({
+    username: { type: String, unique: true, required: true },
+    email: { type: String, unique: true, required: true },
+    password: { type: String, required: true }
 });
 
+const MessageSchema = new mongoose.Schema({
+    username: String,
+    email: String,
+    text: String,
+    room: String,
+    timestamp: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', UserSchema);
+const Message = mongoose.model('Message', MessageSchema);
+
+// AUTH ROUTE: This is what makes the "Enter" button work
 app.post('/api/register', async (req, res) => {
     try {
-        const count = await User.countDocuments();
-        const user = new User({ ...req.body, isAdmin: count === 0, isVIP: count === 0 });
-        await user.save();
+        const { username, email, password } = req.body;
+        // Check if user already exists
+        let user = await User.findOne({ email });
+        if (!user) {
+            user = new User({ username, email, password });
+            await user.save();
+        }
         res.json(user);
-    } catch (e) { res.status(400).send("Error"); }
+    } catch (err) {
+        res.status(400).json({ error: 'System Error' });
+    }
 });
 
 app.get('/api/messages', async (req, res) => {
-    const msgs = await Message.find({ room: req.query.room }).sort({ timestamp: 1 }).limit(50);
-    res.json(msgs);
+    const { room } = req.query;
+    const msgs = await Message.find({ room }).sort({ timestamp: -1 }).limit(50);
+    res.json(msgs.reverse());
 });
 
 app.post('/api/messages', async (req, res) => {
-    const cleanText = req.body.text.replace(/<[^>]*>?/gm, '');
-    const msg = new Message({ ...req.body, text: cleanText });
+    const msg = new Message(req.body);
     await msg.save();
     res.json(msg);
 });
 
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Civility running on ${PORT}`));
+app.listen(PORT, () => console.log(`Server Online on ${PORT}`));
