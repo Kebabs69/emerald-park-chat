@@ -2,151 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokec.sk | English Edition</title>
+    <title>Civility | English Portal</title>
     <style>
-        /* CSS RESET & THEME */
-        :root { --pokec-blue: #0084ff; --pokec-dark: #1c1e21; --bg: #f0f2f5; --border: #dddfe2; --white: #ffffff; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --p-blue: #0084ff; --p-dark: #1c1e21; --bg: #f0f2f5; --border: #dddfe2; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* TOP AZET NAVIGATION */
-        #azet-nav { background: #1a1a1a; color: #bbb; font-size: 11px; padding: 6px 20px; display: flex; gap: 18px; font-weight: 700; align-items: center; }
-        #azet-nav span:hover { color: #fff; cursor: pointer; }
+        /* Top Admin Bar */
+        #top-bar { background: #1a1a1a; color: #ccc; font-size: 11px; padding: 6px 20px; display: flex; justify-content: space-between; }
         
-        /* HEADER */
-        header { background: var(--white); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .logo-area { display: flex; align-items: center; gap: 15px; }
-        .logo-area h1 { color: var(--pokec-blue); font-size: 26px; font-weight: 800; letter-spacing: -1px; }
-        .search-bar { background: #f0f2f5; border-radius: 20px; padding: 8px 15px; width: 250px; border: 1px solid transparent; font-size: 14px; }
-
-        /* MAIN LAYOUT */
-        #main-container { display: grid; grid-template-columns: 240px 1fr 280px; flex: 1; overflow: hidden; }
-
-        /* LEFT SIDEBAR: ROOMS */
-        .sidebar-left { background: var(--white); border-right: 1px solid var(--border); overflow-y: auto; padding: 15px 10px; }
-        .section-label { color: #65676b; font-size: 13px; font-weight: 600; padding: 10px; text-transform: uppercase; }
-        .room-link { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px; cursor: pointer; text-decoration: none; color: #050505; font-size: 15px; font-weight: 500; margin-bottom: 2px; }
-        .room-link:hover { background-color: #f2f2f2; }
-        .room-link.active { background-color: #e7f3ff; color: var(--pokec-blue); }
-        .icon-box { width: 36px; height: 36px; border-radius: 50%; background: #e4e6eb; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-
-        /* MIDDLE: CHAT INTERFACE */
-        .chat-view { display: flex; flex-direction: column; background: var(--white); position: relative; }
-        .room-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .room-info h2 { font-size: 18px; font-weight: 700; }
+        /* Header */
+        header { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: var(--p-blue); font-size: 26px; font-weight: 800; text-decoration: none; }
         
-        #message-stream { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        /* Layout */
+        #wrapper { display: grid; grid-template-columns: 240px 1fr 280px; flex: 1; overflow: hidden; }
+
+        /* Sidebar Left: Channels */
+        .s-left { background: #fff; border-right: 1px solid var(--border); padding: 15px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; color: #050505; font-weight: 500; margin-bottom: 2px; }
+        .nav-item:hover { background: #f2f2f2; }
+        .nav-item.active { background: #e7f3ff; color: var(--p-blue); }
+
+        /* Chat Area */
+        .chat-main { display: flex; flex-direction: column; background: #fff; }
+        #msg-stream { flex: 1; overflow-y: auto; padding: 20px; border-bottom: 1px solid var(--border); }
         
-        /* POKEC MESSAGE STYLE */
-        .msg-block { display: flex; gap: 12px; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .user-avatar { width: 48px; height: 48px; border-radius: 10px; background: #ddd; object-fit: cover; border: 1px solid #eee; }
-        .msg-content { flex: 1; }
-        .msg-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .msg-author { font-weight: 700; color: var(--pokec-blue); cursor: pointer; font-size: 14px; }
-        .msg-time { color: #90949c; font-size: 11px; }
-        .msg-text { font-size: 14px; color: #1c1e21; line-height: 1.45; word-break: break-word; }
+        /* Messages */
+        .post { display: flex; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid #f5f5f5; padding-bottom: 10px; }
+        .p-avatar { width: 45px; height: 45px; border-radius: 10px; background: #eee; }
+        .p-user { font-weight: bold; color: var(--p-blue); font-size: 14px; }
+        .p-time { color: #90949c; font-size: 11px; margin-left: 8px; }
+        .p-text { font-size: 14px; color: #1c1e21; margin-top: 3px; }
 
-        /* INPUT PANEL */
-        .input-panel { padding: 20px; border-top: 1px solid var(--border); background: var(--white); }
-        .input-wrapper { display: flex; align-items: center; gap: 10px; background: #f0f2f5; border-radius: 25px; padding: 5px 15px; border: 1px solid var(--border); }
-        #chat-input { flex: 1; border: none; background: transparent; padding: 10px; outline: none; font-size: 15px; }
-        .btn-send { background: var(--pokec-blue); color: white; border: none; padding: 8px 22px; border-radius: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn-send:hover { background: #0073e6; transform: scale(1.02); }
+        /* Input */
+        .p-input { padding: 20px; display: flex; gap: 10px; align-items: center; }
+        #m-input { flex: 1; background: #f0f2f5; border: 1px solid var(--border); padding: 12px 20px; border-radius: 25px; outline: none; }
+        .btn-send { background: var(--p-blue); color: #fff; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
-        /* RIGHT SIDEBAR: USERS */
-        .sidebar-right { background: var(--white); border-left: 1px solid var(--border); overflow-y: auto; padding: 15px; }
-        .user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .user-card:hover { background: #f2f2f2; }
-        .status-indicator { width: 10px; height: 10px; background: #42b72a; border-radius: 50%; border: 2px solid white; }
+        /* Sidebar Right: Online */
+        .s-right { background: #fff; border-left: 1px solid var(--border); padding: 15px; }
 
-        /* AUTH OVERLAY */
-        #auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.1); width: 400px; text-align: center; }
-        .auth-card h2 { color: var(--pokec-blue); font-size: 32px; margin-bottom: 10px; }
-        .auth-card input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; }
+        /* Auth Screen */
+        #auth-gate { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .card { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 380px; text-align: center; }
+        .card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 6px; }
+        .btn-logout { background: #f0f2f5; color: #444; border: 1px solid #ddd; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div id="auth-overlay">
-    <div class="auth-card">
-        <h2>Pokec</h2>
-        <p style="margin-bottom: 25px; color: #606770;">Sign in to join the Slovak community</p>
-        <input type="text" id="reg-user" placeholder="Username (Nick)">
-        <input type="email" id="reg-email" placeholder="Email address">
-        <input type="password" id="reg-pass" placeholder="Password">
-        <button onclick="handleAuth()" class="btn-send" style="width: 100%; padding: 15px; font-size: 16px;">Enter Chat</button>
+<div id="auth-gate">
+    <div class="card">
+        <h1 style="color:var(--p-blue); font-size: 32px; margin-bottom: 5px;">Civility</h1>
+        <p style="color:#666; margin-bottom: 25px;">English Portal Community</p>
+        <input type="text" id="r-nick" placeholder="Choose a Nickname">
+        <input type="email" id="r-email" placeholder="Email Address">
+        <input type="password" id="r-pass" placeholder="Password">
+        <button onclick="doRegister()" class="btn-send" style="width:100%">Register & Join</button>
     </div>
 </div>
 
-<div id="azet-nav">
-    <span>AZET.SK</span><span>POKEC</span><span>EMAIL</span><span>MAPY</span><span>VIDEO</span><span>SLUŽBY</span>
+<div id="top-bar">
+    <div>SERVICES | PORTAL | CHAT | VIDEO</div>
+    <div id="top-user-info"></div>
 </div>
 
 <header>
-    <div class="logo-area">
-        <h1>Pokec</h1>
-        <input type="text" class="search-bar" placeholder="Search for people...">
-    </div>
-    <div id="nav-profile" style="font-weight: bold; color: #444;"></div>
+    <a href="#" class="logo">Civility</a>
+    <button class="btn-logout" onclick="doLogout()">Log Out</button>
 </header>
 
-<div id="main-container">
-    <aside class="sidebar-left">
-        <div class="section-label">Main Rooms</div>
-        <div class="room-link active" onclick="changeRoom('General', '😊 Do pohody')">
-            <div class="icon-box">😊</div> <span>Do pohody</span>
-        </div>
-        <div class="room-link" onclick="changeRoom('English', '🇬🇧 English Only')">
-            <div class="icon-box">🇬🇧</div> <span>English Only</span>
-        </div>
-        <div class="room-link" onclick="changeRoom('Teens', '🎒 Teens')">
-            <div class="icon-box">🎒</div> <span>Teens 15+</span>
-        </div>
-        <div class="room-link" onclick="changeRoom('Adults', '🔞 Adults')">
-            <div class="icon-box">🔞</div> <span>Adults Room</span>
-        </div>
+<div id="wrapper">
+    <aside class="s-left">
+        <div style="font-size: 12px; color: #888; margin-bottom: 10px;">CHANNELS</div>
+        <div class="nav-item active" onclick="setRoom('General')">☕ General Lounge</div>
+        <div class="nav-item" onclick="setRoom('International')">🌍 International</div>
+        <div class="nav-item" onclick="setRoom('Tech')">💻 Tech & Dev</div>
+        <div class="nav-item" onclick="setRoom('VIP')">💎 VIP Member Club</div>
     </aside>
 
-    <main class="chat-view">
-        <div class="room-header">
-            <div class="room-info">
-                <h2 id="current-room-name">Do pohody</h2>
-                <small style="color: #65676b;">Welcome to the general lounge</small>
-            </div>
+    <main class="chat-main">
+        <div style="padding:15px 20px; border-bottom:1px solid var(--border)">
+            <h2 id="room-title">General Lounge</h2>
         </div>
-
-        <div id="message-stream"></div>
-
-        <div class="input-panel">
-            <div class="input-wrapper">
-                <input type="text" id="chat-input" placeholder="Write a message..." onkeypress="if(event.key==='Enter') sendMessage()">
-                <button class="btn-send" onclick="sendMessage()">Odoslať</button>
-            </div>
+        <div id="msg-stream"></div>
+        <div class="p-input">
+            <input type="text" id="m-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
+            <button class="btn-send" onclick="sendMsg()">Send</button>
         </div>
     </main>
 
-    <aside class="sidebar-right">
-        <div class="section-label">Who's Online</div>
-        <div id="online-list"></div>
+    <aside class="s-right">
+        <div style="font-size: 12px; color: #888; margin-bottom: 10px;">USERS IN CHANNEL</div>
+        <div id="user-list"></div>
     </aside>
 </div>
 
 <script>
-    let activeRoom = 'General';
-    let currentUser = JSON.parse(localStorage.getItem('user'));
+    let currentRoom = 'General';
+    let user = JSON.parse(localStorage.getItem('user'));
 
-    if(currentUser) {
-        document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('nav-profile').innerText = currentUser.username;
+    if(user) {
+        document.getElementById('auth-gate').style.display = 'none';
+        document.getElementById('top-user-info').innerText = "Logged in as: " + user.username;
     }
 
-    async function handleAuth() {
-        const username = document.getElementById('reg-user').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-pass').value;
+    async function doRegister() {
+        const username = document.getElementById('r-nick').value;
+        const email = document.getElementById('r-email').value;
+        const password = document.getElementById('r-pass').value;
 
         const res = await fetch('/api/register', {
             method: 'POST',
@@ -159,57 +124,55 @@
             localStorage.setItem('user', JSON.stringify(data));
             location.reload();
         } else {
-            alert("Error joining. Try a different username.");
+            alert("Registration failed. Nickname might be taken.");
         }
     }
 
-    async function sendMessage() {
-        const text = document.getElementById('chat-input').value;
-        if(!text) return;
+    function doLogout() {
+        localStorage.removeItem('user');
+        location.reload();
+    }
 
+    async function sendMsg() {
+        const input = document.getElementById('m-input');
+        if(!input.value) return;
         await fetch('/api/messages', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                username: currentUser.username, 
-                email: currentUser.email, 
-                text, 
-                room: activeRoom
+                username: user.username, email: user.email, text: input.value, room: currentRoom
             })
         });
-        document.getElementById('chat-input').value = '';
-        loadMessages();
+        input.value = '';
+        fetchMsgs();
     }
 
-    async function loadMessages() {
-        const res = await fetch(`/api/messages?room=${activeRoom}`);
-        const messages = await res.json();
-        const stream = document.getElementById('message-stream');
-        
-        stream.innerHTML = messages.map(m => `
-            <div class="msg-block">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="user-avatar">
-                <div class="msg-content">
-                    <div class="msg-top">
-                        <span class="msg-author">${m.username}</span>
-                        <span class="msg-time">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                    </div>
-                    <div class="msg-text">${m.text}</div>
+    async function fetchMsgs() {
+        const res = await fetch(`/api/messages?room=${currentRoom}`);
+        const data = await res.json();
+        const stream = document.getElementById('msg-stream');
+        stream.innerHTML = data.map(m => `
+            <div class="post">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="p-avatar">
+                <div class="p-content">
+                    <span class="p-user">${m.username}</span>
+                    <span class="p-time">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                    <div class="p-text">${m.text}</div>
                 </div>
             </div>
         `).join('');
         stream.scrollTop = stream.scrollHeight;
     }
 
-    function changeRoom(id, name) {
-        activeRoom = id;
-        document.getElementById('current-room-name').innerText = name;
-        document.querySelectorAll('.room-link').forEach(l => l.classList.toggle('active', l.innerText.includes(id)));
-        loadMessages();
+    function setRoom(r) {
+        currentRoom = r;
+        document.getElementById('room-title').innerText = r + " Lounge";
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.innerText.includes(r)));
+        fetchMsgs();
     }
 
-    setInterval(loadMessages, 3000);
-    if(currentUser) loadMessages();
+    setInterval(fetchMsgs, 3000);
+    if(user) fetchMsgs();
 </script>
 </body>
 </html>
