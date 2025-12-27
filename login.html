@@ -2,114 +2,136 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Civility | Pokec English Edition</title>
+    <title>Civility | Pokec Edition</title>
     <style>
-        /* Classic Pokec Blue & Gray Theme */
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; overflow: hidden; }
+        /* Modern Pokec Style Palette */
+        :root { --pokec-blue: #0084ff; --bg-gray: #f0f2f5; --text-dark: #1c1e21; --border: #dddfe2; }
         
-        /* Top Blue Bar */
-        #top-nav { background: #005691; color: white; padding: 5px 15px; display: flex; justify-content: space-between; align-items: center; height: 35px; border-bottom: 2px solid #003d66; }
-        .logo { font-weight: bold; font-size: 18px; letter-spacing: 1px; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gray); height: 100vh; display: flex; flex-direction: column; }
 
-        /* Main Container */
-        #main-layout { display: grid; grid-template-columns: 180px 1fr 220px; height: calc(100vh - 47px); }
+        /* Top Bar mimicking Azet/Pokec header */
+        #azet-bar { background: #1a1a1a; color: #ccc; font-size: 11px; padding: 5px 20px; display: flex; gap: 15px; font-weight: bold; }
+        #header { background: white; border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
 
-        /* Left Sidebar: Rooms */
-        #rooms-sidebar { background: #e2eaf3; border-right: 1px solid #ccc; padding: 10px; }
-        .room-category { font-weight: bold; color: #005691; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #ccc; }
-        .room-link { display: block; padding: 4px 8px; text-decoration: none; color: #444; font-size: 12px; cursor: pointer; border-radius: 3px; }
-        .room-link:hover { background: #fff; color: #005691; }
-        .room-link.active { background: #005691; color: white; font-weight: bold; }
+        /* Main Layout Grid */
+        #app-container { display: grid; grid-template-columns: 240px 1fr 280px; flex: 1; overflow: hidden; }
 
-        /* Middle: Chat Flow */
-        #chat-section { display: flex; flex-direction: column; background: #fff; position: relative; }
-        #messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; border-bottom: 1px solid #ddd; }
-        .msg-line { margin-bottom: 5px; border-bottom: 1px dotted #eee; padding-bottom: 2px; }
-        .msg-user { font-weight: bold; color: #005691; cursor: pointer; }
-        .msg-text { color: #000; margin-left: 5px; }
-        .msg-time { color: #999; font-size: 10px; margin-right: 5px; }
-        .msg-bot { color: #cc0000; font-style: italic; }
+        /* Left Sidebar: Miestnosti (Rooms) */
+        .sidebar-left { background: white; border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
+        .sidebar-title { font-weight: 800; color: #4b4f56; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .room-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; color: #444; font-size: 14px; margin-bottom: 2px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .room-item:hover { background: #f2f2f2; }
+        .room-item.active { background: #e7f3ff; color: var(--pokec-blue); font-weight: bold; }
+        .room-icon { background: #eee; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* Input Area */
-        #input-area { padding: 10px; background: #f9f9f9; display: flex; gap: 5px; }
-        #chat-input { flex: 1; padding: 6px; border: 1px solid #aaa; border-radius: 2px; }
-        .btn-send { background: #005691; color: white; border: none; padding: 5px 15px; cursor: pointer; font-weight: bold; }
+        /* Middle Chat Area */
+        #chat-main { display: flex; flex-direction: column; background: white; }
+        #room-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
+        #room-header h2 { margin: 0; font-size: 18px; color: var(--text-dark); }
+        
+        #message-flow { flex: 1; overflow-y: auto; padding: 15px 20px; background: white; }
+        
+        /* Message Style - Matching your Pokec screenshot */
+        .post { display: flex; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+        .post-avatar { width: 45px; height: 45px; border-radius: 8px; background: #ddd; object-fit: cover; }
+        .post-content { flex: 1; }
+        .post-header { margin-bottom: 4px; font-size: 13px; }
+        .post-user { font-weight: bold; color: var(--pokec-blue); cursor: pointer; }
+        .post-user:hover { text-decoration: underline; }
+        .post-meta { color: #90949c; font-size: 12px; margin-left: 8px; }
+        .post-text { font-size: 14px; color: #1c1e21; line-height: 1.4; }
 
-        /* Right Sidebar: Users Online */
-        #users-sidebar { background: #f9f9f9; border-left: 1px solid #ccc; padding: 10px; overflow-y: auto; }
-        .user-online { font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
-        .status-dot { width: 8px; height: 8px; background: #44b700; border-radius: 50%; }
-        .admin-star { color: gold; font-weight: bold; }
+        /* Input Area - Exactly like your "Odoslat" photo */
+        #input-panel { padding: 15px 20px; background: white; border-top: 1px solid var(--border); }
+        .input-wrapper { display: flex; gap: 10px; background: #f0f2f5; padding: 8px; border-radius: 25px; align-items: center; }
+        #msg-input { flex: 1; border: none; background: transparent; padding: 8px 15px; outline: none; font-size: 14px; }
+        .btn-send { background: var(--pokec-blue); color: white; border: none; padding: 8px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-send:hover { background: #0073e6; }
 
-        /* Login Overlay */
-        #login-overlay { position: fixed; inset: 0; background: #005691; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .login-box { background: #fff; padding: 25px; border-radius: 5px; box-shadow: 0 0 15px rgba(0,0,0,0.5); width: 280px; text-align: center; }
-        .login-box input { width: 90%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; }
+        /* Right Sidebar: Ludia (People) */
+        .sidebar-right { background: white; border-left: 1px solid var(--border); padding: 15px; }
+        .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; }
+        .online-dot { width: 8px; height: 8px; background: #42b72a; border-radius: 50%; }
+
+        /* Login Screen */
+        #login-screen { position: fixed; inset: 0; background: var(--bg-gray); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .login-card input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2 style="color:#005691">Civility English</h2>
-            <p style="font-size:12px">Login or Register automatically</p>
-            <input type="email" id="email" placeholder="Email">
+    <div id="login-screen">
+        <div class="login-card">
+            <h1 style="color:var(--pokec-blue); margin-bottom: 5px;">Civility</h1>
+            <p style="color:#606770; margin-bottom: 30px;">Professional Slovak-style Chat</p>
+            <input type="email" id="email" placeholder="Email address">
             <input type="password" id="pass" placeholder="Password">
-            <button onclick="auth()" class="btn-send" style="width:100%">Enter Chat</button>
+            <button onclick="auth()" class="btn-send" style="width:100%; justify-content:center; padding: 12px;">Login / Register</button>
         </div>
     </div>
 
-    <div id="top-nav">
-        <div class="logo">CIVILITY CHAT</div>
-        <div id="user-info" style="font-size: 12px;"></div>
+    <div id="azet-bar">
+        <span>AZET SLUŽBY</span> <span>POKEC</span> <span>EMAIL</span> <span>VIDEO</span>
     </div>
 
-    <div id="main-layout">
-        <div id="rooms-sidebar">
-            <div class="room-category">CHANNELS</div>
-            <div class="room-link active" onclick="setRoom('General')">General Lounge</div>
-            <div class="room-link" onclick="setRoom('Adults')">Adults 20+</div>
-            <div class="room-link" onclick="setRoom('Tech')">Tech & PC</div>
-            <div class="room-link" onclick="setRoom('VIP')">💎 VIP Area</div>
-            <br>
-            <div class="room-category">MY LINKS</div>
-            <a href="https://www.buymeacoffee.com/YOURNAME" target="_blank" class="room-link" style="color: #c60">Support Site</a>
+    <div id="header">
+        <h1 style="color:var(--pokec-blue); margin:0; font-size: 24px;">Pokec</h1>
+        <div id="user-display" style="font-weight:bold; font-size:14px"></div>
+    </div>
+
+    <div id="app-container">
+        <div class="sidebar-left">
+            <div class="sidebar-title">🏘 Miestnosti</div>
+            <div class="room-item active" onclick="setRoom('General')"><div class="room-icon">😊</div> Do pohody</div>
+            <div class="room-item" onclick="setRoom('English')"><div class="room-icon">🇬🇧</div> English Lounge</div>
+            <div class="room-item" onclick="setRoom('VIP')"><div class="room-icon">💎</div> VIP Club</div>
         </div>
 
-        <div id="chat-section">
-            <div id="messages"></div>
-            <div id="input-area">
-                <input type="text" id="chat-input" placeholder="Write a message..." onkeypress="if(event.key==='Enter') send()">
-                <button class="btn-send" onclick="send()">Send</button>
+        <div id="chat-main">
+            <div id="room-header">
+                <div style="font-size: 24px;">😊</div>
+                <div>
+                    <h2 id="room-name">Do pohody</h2>
+                    <span style="font-size:12px; color:#606770">Active community room</span>
+                </div>
+            </div>
+
+            <div id="message-flow"></div>
+
+            <div id="input-panel">
+                <div class="input-wrapper">
+                    <input type="text" id="msg-input" placeholder="Napíš správu..." onkeypress="if(event.key==='Enter') send()">
+                    <button class="btn-send" onclick="send()">Odoslať</button>
+                </div>
             </div>
         </div>
 
-        <div id="users-sidebar">
-            <div class="room-category">ONLINE</div>
-            <div id="user-list"></div>
+        <div class="sidebar-right">
+            <div class="sidebar-title">Ludia v miestnosti</div>
+            <div id="online-list"></div>
         </div>
     </div>
 
     <script>
-        let user = JSON.parse(localStorage.getItem('user'));
-        let currentRoom = 'General';
-        if(user) {
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('user-info').innerText = `Logged in as: ${user.username}`;
+        let me = JSON.parse(localStorage.getItem('user'));
+        let room = 'General';
+
+        if(me) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('user-display').innerText = me.username;
         }
 
         async function auth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('pass').value;
             let res = await fetch('/api/login', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
+                method: 'POST', headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({email, password}) 
             });
             if(!res.ok) {
                 res = await fetch('/api/register', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
                     body: JSON.stringify({username: email.split('@')[0], email, password}) 
                 });
             }
@@ -119,48 +141,51 @@
         }
 
         async function send() {
-            const text = document.getElementById('chat-input').value;
+            const text = document.getElementById('msg-input').value;
             if(!text) return;
             await fetch('/api/messages', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    username: user.username, email: user.email, 
-                    text, room: currentRoom, avatar: user.avatar, isAdmin: user.isAdmin
+                    username: me.username, email: me.email, text, 
+                    room, avatar: me.avatar, isAdmin: me.isAdmin
                 })
             });
-            document.getElementById('chat-input').value = '';
-            load();
+            document.getElementById('msg-input').value = '';
+            refresh();
         }
 
-        async function load() {
-            const res = await fetch(`/api/messages?room=${currentRoom}`);
+        async function refresh() {
+            const res = await fetch(`/api/messages?room=${room}`);
             const data = await res.json();
-            const flow = document.getElementById('messages');
+            const flow = document.getElementById('message-flow');
             flow.innerHTML = data.map(m => `
-                <div class="msg-line">
-                    <span class="msg-time">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                    <span class="msg-user" onclick="alert('Profile of ${m.username}')">${m.username}${m.isAdmin ? '<span class="admin-star">★</span>' : ''}:</span>
-                    <span class="msg-text">${m.text}</span>
+                <div class="post">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="post-avatar">
+                    <div class="post-content">
+                        <div class="post-header">
+                            <span class="post-user">${m.username}</span>
+                            <span class="post-meta">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div class="post-text">${m.text}</div>
+                    </div>
                 </div>
             `).join('');
             flow.scrollTop = flow.scrollHeight;
 
-            // Fake "Who's Online" for that Pokec feel
-            document.getElementById('user-list').innerHTML = `
-                <div class="user-online"><div class="status-dot"></div> ${user.username} (me)</div>
-                <div class="user-online"><div class="status-dot" style="background:#ccc"></div> EmeraldBot 🤖</div>
+            document.getElementById('online-list').innerHTML = `
+                <div class="user-row"><div class="online-dot"></div> ${me.username}</div>
             `;
         }
 
         function setRoom(r) {
-            currentRoom = r;
-            document.querySelectorAll('.room-link').forEach(l => l.classList.toggle('active', l.innerText.includes(r)));
-            load();
+            room = r;
+            document.getElementById('room-name').innerText = r === 'General' ? 'Do pohody' : r;
+            document.querySelectorAll('.room-item').forEach(i => i.classList.toggle('active', i.innerText.includes(r)));
+            refresh();
         }
 
-        setInterval(load, 3000);
-        if(user) load();
+        setInterval(refresh, 3000);
+        if(me) refresh();
     </script>
 </body>
 </html>
