@@ -2,190 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Civility | Pokec Edition</title>
+    <title>Pokec | English Edition</title>
     <style>
-        /* Modern Pokec Style Palette */
-        :root { --pokec-blue: #0084ff; --bg-gray: #f0f2f5; --text-dark: #1c1e21; --border: #dddfe2; }
-        
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gray); height: 100vh; display: flex; flex-direction: column; }
+        :root { --pokec-blue: #0084ff; --pokec-bg: #f0f2f5; --border: #e1e4e8; }
+        body { margin: 0; font-family: sans-serif; background: var(--pokec-bg); display: flex; flex-direction: column; height: 100vh; }
 
         /* Top Bar mimicking Azet/Pokec header */
-        #azet-bar { background: #1a1a1a; color: #ccc; font-size: 11px; padding: 5px 20px; display: flex; gap: 15px; font-weight: bold; }
-        #header { background: white; border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+        #top-header { background: #fff; border-bottom: 1px solid var(--border); padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-text { color: var(--pokec-blue); font-size: 24px; font-weight: bold; }
 
-        /* Main Layout Grid */
-        #app-container { display: grid; grid-template-columns: 240px 1fr 280px; flex: 1; overflow: hidden; }
+        /* 3-Column Layout */
+        #main-wrapper { display: grid; grid-template-columns: 220px 1fr 250px; flex: 1; overflow: hidden; }
 
-        /* Left Sidebar: Miestnosti (Rooms) */
-        .sidebar-left { background: white; border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
-        .sidebar-title { font-weight: 800; color: #4b4f56; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .room-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; color: #444; font-size: 14px; margin-bottom: 2px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
-        .room-item:hover { background: #f2f2f2; }
-        .room-item.active { background: #e7f3ff; color: var(--pokec-blue); font-weight: bold; }
-        .room-icon { background: #eee; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        /* LEFT: Miestnosti */
+        .sidebar-left { background: #fff; border-right: 1px solid var(--border); padding: 15px; }
+        .sidebar-title { font-weight: bold; color: #666; font-size: 14px; margin-bottom: 10px; }
+        .room-btn { padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 2px; }
+        .room-btn:hover { background: #f2f2f2; }
+        .room-btn.active { background: #e7f3ff; color: var(--pokec-blue); font-weight: bold; }
 
-        /* Middle Chat Area */
-        #chat-main { display: flex; flex-direction: column; background: white; }
-        #room-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
-        #room-header h2 { margin: 0; font-size: 18px; color: var(--text-dark); }
+        /* MIDDLE: Chat */
+        .chat-container { display: flex; flex-direction: column; background: #fff; }
+        #chat-header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        #message-flow { flex: 1; overflow-y: auto; padding: 15px; }
         
-        #message-flow { flex: 1; overflow-y: auto; padding: 15px 20px; background: white; }
-        
-        /* Message Style - Matching your Pokec screenshot */
-        .post { display: flex; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-        .post-avatar { width: 45px; height: 45px; border-radius: 8px; background: #ddd; object-fit: cover; }
-        .post-content { flex: 1; }
-        .post-header { margin-bottom: 4px; font-size: 13px; }
-        .post-user { font-weight: bold; color: var(--pokec-blue); cursor: pointer; }
-        .post-user:hover { text-decoration: underline; }
-        .post-meta { color: #90949c; font-size: 12px; margin-left: 8px; }
-        .post-text { font-size: 14px; color: #1c1e21; line-height: 1.4; }
+        /* Message Bubbles - Matching your screenshot */
+        .msg-entry { display: flex; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px; }
+        .avatar { width: 40px; height: 40px; border-radius: 8px; background: #ddd; }
+        .msg-info { flex: 1; }
+        .username { font-weight: bold; color: var(--pokec-blue); font-size: 13px; }
+        .timestamp { color: #999; font-size: 11px; margin-left: 8px; }
+        .text { font-size: 14px; color: #333; margin-top: 2px; }
 
-        /* Input Area - Exactly like your "Odoslat" photo */
-        #input-panel { padding: 15px 20px; background: white; border-top: 1px solid var(--border); }
-        .input-wrapper { display: flex; gap: 10px; background: #f0f2f5; padding: 8px; border-radius: 25px; align-items: center; }
-        #msg-input { flex: 1; border: none; background: transparent; padding: 8px 15px; outline: none; font-size: 14px; }
-        .btn-send { background: var(--pokec-blue); color: white; border: none; padding: 8px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .btn-send:hover { background: #0073e6; }
+        /* BOTTOM: Input area */
+        #input-box { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: #fff; }
+        #msg-field { flex: 1; padding: 10px 15px; border: 1px solid var(--border); border-radius: 20px; outline: none; background: #f0f2f5; }
+        .send-btn { background: var(--pokec-blue); color: #fff; border: none; padding: 0 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
-        /* Right Sidebar: Ludia (People) */
-        .sidebar-right { background: white; border-left: 1px solid var(--border); padding: 15px; }
-        .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; }
-        .online-dot { width: 8px; height: 8px; background: #42b72a; border-radius: 50%; }
-
-        /* Login Screen */
-        #login-screen { position: fixed; inset: 0; background: var(--bg-gray); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.1); width: 350px; text-align: center; }
-        .login-card input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+        /* RIGHT: Online Users */
+        .sidebar-right { background: #fff; border-left: 1px solid var(--border); padding: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-card">
-            <h1 style="color:var(--pokec-blue); margin-bottom: 5px;">Civility</h1>
-            <p style="color:#606770; margin-bottom: 30px;">Professional Slovak-style Chat</p>
-            <input type="email" id="email" placeholder="Email address">
-            <input type="password" id="pass" placeholder="Password">
-            <button onclick="auth()" class="btn-send" style="width:100%; justify-content:center; padding: 12px;">Login / Register</button>
-        </div>
+    <div id="top-header">
+        <div class="logo-text">Pokec</div>
+        <div id="me-status" style="font-size: 13px; font-weight: bold;"></div>
     </div>
 
-    <div id="azet-bar">
-        <span>AZET SLUŽBY</span> <span>POKEC</span> <span>EMAIL</span> <span>VIDEO</span>
-    </div>
-
-    <div id="header">
-        <h1 style="color:var(--pokec-blue); margin:0; font-size: 24px;">Pokec</h1>
-        <div id="user-display" style="font-weight:bold; font-size:14px"></div>
-    </div>
-
-    <div id="app-container">
+    <div id="main-wrapper">
         <div class="sidebar-left">
-            <div class="sidebar-title">🏘 Miestnosti</div>
-            <div class="room-item active" onclick="setRoom('General')"><div class="room-icon">😊</div> Do pohody</div>
-            <div class="room-item" onclick="setRoom('English')"><div class="room-icon">🇬🇧</div> English Lounge</div>
-            <div class="room-item" onclick="setRoom('VIP')"><div class="room-icon">💎</div> VIP Club</div>
+            <div class="sidebar-title">Miestnosti</div>
+            <div class="room-btn active">😊 Do pohody</div>
+            <div class="room-btn">🇬🇧 English Only</div>
+            <div class="room-btn">🎮 Gaming</div>
         </div>
 
-        <div id="chat-main">
-            <div id="room-header">
-                <div style="font-size: 24px;">😊</div>
-                <div>
-                    <h2 id="room-name">Do pohody</h2>
-                    <span style="font-size:12px; color:#606770">Active community room</span>
-                </div>
+        <div class="chat-container">
+            <div id="chat-header">
+                <span style="font-size: 20px;">😊</span>
+                <strong id="room-title">Do pohody</strong>
             </div>
-
-            <div id="message-flow"></div>
-
-            <div id="input-panel">
-                <div class="input-wrapper">
-                    <input type="text" id="msg-input" placeholder="Napíš správu..." onkeypress="if(event.key==='Enter') send()">
-                    <button class="btn-send" onclick="send()">Odoslať</button>
+            <div id="message-flow">
                 </div>
+            <div id="input-box">
+                <input type="text" id="msg-field" placeholder="Napíš správu..." onkeypress="if(event.key==='Enter') send()">
+                <button class="send-btn" onclick="send()">Odoslať</button>
             </div>
         </div>
 
         <div class="sidebar-right">
-            <div class="sidebar-title">Ludia v miestnosti</div>
-            <div id="online-list"></div>
+            <div class="sidebar-title">Ľudia v miestnosti</div>
+            <div id="user-list" style="font-size: 13px;"></div>
         </div>
     </div>
 
     <script>
-        let me = JSON.parse(localStorage.getItem('user'));
-        let room = 'General';
-
-        if(me) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('user-display').innerText = me.username;
-        }
-
-        async function auth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('pass').value;
-            let res = await fetch('/api/login', { 
-                method: 'POST', headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({email, password}) 
-            });
-            if(!res.ok) {
-                res = await fetch('/api/register', { 
-                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({username: email.split('@')[0], email, password}) 
-                });
-            }
-            const data = await res.json();
-            localStorage.setItem('user', JSON.stringify(data));
-            location.reload();
-        }
-
-        async function send() {
-            const text = document.getElementById('msg-input').value;
-            if(!text) return;
-            await fetch('/api/messages', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: me.username, email: me.email, text, 
-                    room, avatar: me.avatar, isAdmin: me.isAdmin
-                })
-            });
-            document.getElementById('msg-input').value = '';
-            refresh();
-        }
+        // Simple script to handle UI
+        let user = JSON.parse(localStorage.getItem('user')) || { username: "Guest", email: "guest@guest.com" };
+        document.getElementById('me-status').innerText = user.username;
 
         async function refresh() {
-            const res = await fetch(`/api/messages?room=${room}`);
+            const res = await fetch('/api/messages?room=General');
             const data = await res.json();
             const flow = document.getElementById('message-flow');
             flow.innerHTML = data.map(m => `
-                <div class="post">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="post-avatar">
-                    <div class="post-content">
-                        <div class="post-header">
-                            <span class="post-user">${m.username}</span>
-                            <span class="post-meta">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <div class="post-text">${m.text}</div>
+                <div class="msg-entry">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="avatar">
+                    <div class="msg-info">
+                        <div><span class="username">${m.username}</span><span class="timestamp">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>
+                        <div class="text">${m.text}</div>
                     </div>
                 </div>
             `).join('');
             flow.scrollTop = flow.scrollHeight;
-
-            document.getElementById('online-list').innerHTML = `
-                <div class="user-row"><div class="online-dot"></div> ${me.username}</div>
-            `;
         }
 
-        function setRoom(r) {
-            room = r;
-            document.getElementById('room-name').innerText = r === 'General' ? 'Do pohody' : r;
-            document.querySelectorAll('.room-item').forEach(i => i.classList.toggle('active', i.innerText.includes(r)));
+        async function send() {
+            const input = document.getElementById('msg-field');
+            if(!input.value) return;
+            await fetch('/api/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: user.username, email: user.email, text: input.value, room: 'General' })
+            });
+            input.value = '';
             refresh();
         }
 
         setInterval(refresh, 3000);
-        if(me) refresh();
+        refresh();
     </script>
 </body>
 </html>
